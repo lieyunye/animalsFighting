@@ -18,17 +18,19 @@ class GameScene: SKScene,SKPhysicsContactDelegate{
 
     var animalsName:[String] = ["象","虎","狮","豹","狼","狗","蛇","鼠"]
     var animalsBackgroundColors = [UIColor]()
-    var selectedNode:SKSpriteNode!
+    var selectedNode:AnimalSpriteNode!
     
+    var waterSpriteNode:WaterSpriteNode!
     var gameStarted:Bool = false
     
     override func didMoveToView(view: SKView) {
         /* Setup your scene here */
         
         physicsWorld.contactDelegate = self
-
-
         let animalSize:CGSize = CGSizeMake(self.frame.size.width/8.0, self.frame.size.width/8.0)
+        let waterSpriteSize:CGSize = CGSizeMake(self.frame.size.width, self.frame.size.height - (animalSize.height * 4 + 10 * 2))
+        
+
         self.backgroundColor = UIColor.blackColor()
 
         for item in 0..<8 {
@@ -43,7 +45,8 @@ class GameScene: SKScene,SKPhysicsContactDelegate{
                 redAnimalSprite.physicsBody?.collisionBitMask = PhysicsCategory.none
                 redAnimalSprite.physicsBody?.dynamic = true
                 redAnimalSprite.physicsBody?.affectedByGravity = false
-                redAnimalSprite.name = ""
+                redAnimalSprite.name = animalsName[col]
+                
                 var x:CGFloat = CGFloat(col)*animalSize.width + animalSize.width/2.0
                 var y:CGFloat = CGFloat(row)*(animalSize.height + 10) + animalSize.height/2.0
                 redAnimalSprite.position = CGPointMake(x, y)
@@ -60,6 +63,7 @@ class GameScene: SKScene,SKPhysicsContactDelegate{
                 blueAnimalSprite.physicsBody?.collisionBitMask = PhysicsCategory.none
                 blueAnimalSprite.physicsBody?.dynamic = true
                 blueAnimalSprite.physicsBody?.affectedByGravity = false
+                blueAnimalSprite.name = animalsName[col]
 
                 
                 var x:CGFloat = CGFloat(col)*animalSize.width + animalSize.width/2.0
@@ -68,6 +72,11 @@ class GameScene: SKScene,SKPhysicsContactDelegate{
                 self.addChild(blueAnimalSprite)
             }
         }
+        
+        waterSpriteNode = WaterSpriteNode(color: SKColor.greenColor(), size: waterSpriteSize)
+        waterSpriteNode.position = CGPointMake(CGRectGetMidX(self.frame), CGRectGetMidY(self.frame))
+        self.addChild(waterSpriteNode)
+        
     }
     
     func getRandomColor() -> UIColor {
@@ -81,7 +90,6 @@ class GameScene: SKScene,SKPhysicsContactDelegate{
     override func touchesBegan(touches: NSSet, withEvent event: UIEvent) {
         /* Called when a touch begins */
         gameStarted = true
-        
         for touch: AnyObject in touches {
             let location = touch.locationInNode(self)
             selectNodeForTouch(location)
@@ -93,9 +101,11 @@ class GameScene: SKScene,SKPhysicsContactDelegate{
     }
     
     func selectNodeForTouch(touchLocation:CGPoint){
+        
+
         var touchedNode:SKNode = self.nodeAtPoint(touchLocation)
-        if !touchedNode .isKindOfClass(SKLabelNode) {
-            println("not touch an animalSprite")
+        if touchedNode.isKindOfClass(WaterSpriteNode) {
+            println("touch on WaterSpriteNode")
             if (selectedNode != nil) {
                 selectedNode.removeAllActions()
                 selectedNode.runAction(SKAction.rotateToAngle(0.0, duration: 0.1))
@@ -103,14 +113,19 @@ class GameScene: SKScene,SKPhysicsContactDelegate{
             }
             return
         }
-        var nodeObject:SKSpriteNode = touchedNode.parent as SKSpriteNode
+        var nodeObject:AnimalSpriteNode?
+        if touchedNode.isKindOfClass(SKLabelNode){
+            nodeObject = touchedNode.parent as? AnimalSpriteNode
+        }else {
+            nodeObject = touchedNode as? AnimalSpriteNode
+        }
         if (selectedNode != nil) {
-            if selectedNode.physicsBody?.categoryBitMask == nodeObject.physicsBody?.categoryBitMask {
-                println("同一阵营")
-                return
-            }
-            if !selectedNode.isEqual(nodeObject) {
-                
+//            if selectedNode.physicsBody?.categoryBitMask == nodeObject.physicsBody?.categoryBitMask {
+//                println("同一阵营")
+//                return
+//            }
+            if selectedNode.isEqual(nodeObject) == false {
+
                 var xTouchOffset:CGFloat = touchLocation.x - selectedNode.position.x
                 var yTouchOffset:CGFloat = touchLocation.y - selectedNode.position.y
                 
@@ -124,26 +139,98 @@ class GameScene: SKScene,SKPhysicsContactDelegate{
                     return;
                 }
                 
-                if fabs(xTouchOffset) - selectedNode.frame.size.width - selectedNode.size.width/2.0 > 0 {
-                    println("移动距离左右超出两格")
-                    return;
+                if xTouchOffset > 0 && fabs(xTouchOffset) > fabs(yTouchOffset){
+                    println("right")
+                    var destinationPosizition:CGPoint = CGPointMake(selectedNode.position.x + selectedNode.frame.size.width, selectedNode.position.y)
+                    
+                    var touchedNode:SKNode? = self.nodeAtPoint(destinationPosizition)
+                    if (touchedNode == nil) {
+                        var moveAction:SKAction = SKAction.moveTo(destinationPosizition, duration:0.3)
+                        selectedNode.runAction(moveAction)
+                        selectedNode.removeAllActions()
+                        selectedNode.runAction(SKAction.rotateToAngle(0.0, duration: 0.1))
+                    }
+                    
+                    return
+                    
                 }
                 
-                if fabs(yTouchOffset) - selectedNode.frame.size.width - selectedNode.size.width/2.0 > 0 {
-                    println("移动距离上下超出两格")
-                    return;
+                if xTouchOffset < 0 && fabs(xTouchOffset) > fabs(yTouchOffset){
+                    println("left")
+                    var destinationPosizition:CGPoint = CGPointMake(selectedNode.position.x - selectedNode.frame.size.width, selectedNode.position.y)
+                    
+                    var touchedNode:SKNode? = self.nodeAtPoint(destinationPosizition)
+                    if (touchedNode == nil) {
+                        var moveAction:SKAction = SKAction.moveTo(destinationPosizition, duration:0.3)
+                        selectedNode.runAction(moveAction)
+                        selectedNode.removeAllActions()
+                        selectedNode.runAction(SKAction.rotateToAngle(0.0, duration: 0.1))
+                    }
+                    return
+                    
+                }
+                if yTouchOffset > 0 && fabs(yTouchOffset) > fabs(xTouchOffset){
+                    println("up")
+                    
+                    var destinationPosizition:CGPoint = CGPointMake(selectedNode.position.x, selectedNode.position.y + selectedNode.frame.size.width)
+                    if touchLocation.y - selectedNode.position.y > waterSpriteNode.frame.size.height + selectedNode.frame.size.height/2 {
+                        destinationPosizition = CGPointMake(selectedNode.position.x, selectedNode.position.y + selectedNode.frame.size.width + waterSpriteNode.frame.size.height)
+                    }
+                    
+                    var touchedNode1:SKNode! = self.nodeAtPoint(destinationPosizition)
+                    if touchedNode1 is SKLabelNode {
+                        touchedNode1 = touchedNode1.parent as AnimalSpriteNode
+                    }
+                    
+                    if (touchedNode1 == nil || selectedNode.physicsBody?.categoryBitMask != touchedNode1.physicsBody?.categoryBitMask) {
+                        var moveAction:SKAction = SKAction.moveTo(destinationPosizition, duration:0.3)
+                        var doneAction:SKAction = SKAction.runBlock({ () -> Void in
+                            self.selectedNode.removeAllActions()
+                            self.selectedNode.runAction(SKAction.rotateToAngle(0.0, duration: 0.1))
+                        })
+                        var sequence:SKAction = SKAction.sequence([moveAction,doneAction])
+                        selectedNode.runAction(sequence)
+
+                    }
+                    return
                 }
                 
-                selectedNode.removeAllActions()
-                selectedNode.runAction(SKAction.rotateToAngle(0.0, duration: 0.1))
+                if yTouchOffset < 0 && fabs(yTouchOffset) > fabs(xTouchOffset){
+                    println("down")
+                    var destinationPosizition:CGPoint = CGPointMake(selectedNode.position.x, selectedNode.position.y - selectedNode.frame.size.width)
+                    
+                    var touchedNode:SKNode? = self.nodeAtPoint(destinationPosizition)
+                    if (touchedNode == nil) {
+                        var moveAction:SKAction = SKAction.moveTo(destinationPosizition, duration:0.3)
+                        selectedNode.runAction(moveAction)
+                        selectedNode.removeAllActions()
+                        selectedNode.runAction(SKAction.rotateToAngle(0.0, duration: 0.1))
+                    }
+                    return
+                }
                 
-                var moveAction:SKAction = SKAction.moveTo(nodeObject.position, duration:0.3)
+                
+//                if fabs(xTouchOffset) - selectedNode.frame.size.width - selectedNode.size.width/2.0 > 0 {
+//                    println("移动距离左右超出两格")
+//                    
+//                    
+//                    return;
+//                }
+//                
+//                if fabs(yTouchOffset) - selectedNode.frame.size.width - selectedNode.size.width/2.0 > 0 {
+//                    println("移动距离上下超出两格")
+//                    return;
+//                }
+                
+                
+                
+//                var moveAction:SKAction = SKAction.moveTo(nodeObject.position, duration:0.3)
 //                var doneAction:SKAction = SKAction.runBlock({ () -> Void in
 //                    nodeObject.removeFromParent()
 //                    self.selectedNode = nil
 //                })
 //                var sequence:SKAction = SKAction.sequence([moveAction,doneAction])
-                selectedNode.runAction(moveAction)
+//                selectedNode.runAction(moveAction)
             }
         }else {
             selectedNode = nodeObject

@@ -16,6 +16,7 @@
 		FC20C4D61ABD7E66004BF303 /* LaunchScreen.xib in Resources */ = {isa = PBXBuildFile; fileRef = FC20C4D41ABD7E66004BF303 /* LaunchScreen.xib */; };
 		FC20C4E21ABD7E66004BF303 /* animalsFightingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC20C4E11ABD7E66004BF303 /* animalsFightingTests.swift */; };
 		FC20C4EC1ABDB3B4004BF303 /* AnimalSpriteNode.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC20C4EB1ABDB3B4004BF303 /* AnimalSpriteNode.swift */; };
+		FCD445491AC69FDF0039FD1F /* WaterSpriteNode.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD445481AC69FDF0039FD1F /* WaterSpriteNode.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -42,6 +43,7 @@
 		FC20C4E01ABD7E66004BF303 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		FC20C4E11ABD7E66004BF303 /* animalsFightingTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = animalsFightingTests.swift; sourceTree = "<group>"; };
 		FC20C4EB1ABDB3B4004BF303 /* AnimalSpriteNode.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AnimalSpriteNode.swift; sourceTree = "<group>"; };
+		FCD445481AC69FDF0039FD1F /* WaterSpriteNode.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = WaterSpriteNode.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -92,6 +94,7 @@
 				FC20C4D41ABD7E66004BF303 /* LaunchScreen.xib */,
 				FC20C4C51ABD7E66004BF303 /* Supporting Files */,
 				FC20C4EB1ABDB3B4004BF303 /* AnimalSpriteNode.swift */,
+				FCD445481AC69FDF0039FD1F /* WaterSpriteNode.swift */,
 			);
 			path = animalsFighting;
 			sourceTree = "<group>";
@@ -222,6 +225,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				FCD445491AC69FDF0039FD1F /* WaterSpriteNode.swift in Sources */,
 				FC20C4EC1ABDB3B4004BF303 /* AnimalSpriteNode.swift in Sources */,
 				FC20C4CC1ABD7E66004BF303 /* GameScene.swift in Sources */,
 				FC20C4CE1ABD7E66004BF303 /* GameViewController.swift in Sources */,
@@ -419,6 +423,7 @@
 				FC20C4E71ABD7E66004BF303 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 		FC20C4E81ABD7E66004BF303 /* Build configuration list for PBXNativeTarget "animalsFightingTests" */ = {
 			isa = XCConfigurationList;
@@ -427,6 +432,7 @@
 				FC20C4EA1ABD7E66004BF303 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
 	};
