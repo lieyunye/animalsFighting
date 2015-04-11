@@ -10,6 +10,8 @@ import SpriteKit
 
 class AnimalSpriteNode: SKSpriteNode {
     
+    var power:Int!
+    
     required init?(coder aDecoder: NSCoder) {
         fatalError("NSCodeing not supported")
     }
