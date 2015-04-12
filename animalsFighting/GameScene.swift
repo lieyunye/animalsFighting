@@ -28,6 +28,11 @@ class GameScene: SKScene,SKPhysicsContactDelegate{
     var waterSpriteNode:WaterSpriteNode!
     var gameStarted:Bool = false
     
+    var redBlood:Int = 16
+    var blueBlood:Int = 16
+    
+    var gameOver:Bool = false
+    
     override func didMoveToView(view: SKView) {
         /* Setup your scene here */
         
@@ -131,7 +136,26 @@ class GameScene: SKScene,SKPhysicsContactDelegate{
    
     override func update(currentTime: CFTimeInterval) {
         /* Called before each frame is rendered */
+        
+        if gameOver {
+            return
+        }
+        if redBlood == 0 || blueBlood == 0{
+            print("redBlood \(redBlood)")
+            print("blueBlood \(blueBlood)")
+            gameOver = true
+            endGame()
+        }
+        
     }
+    
+    func endGame() {
+        var startGameScene:StartGameScene = StartGameScene()
+        startGameScene.size = self.frame.size
+        var reveal:SKTransition = SKTransition.doorsCloseHorizontalWithDuration(1)
+        self.view?.presentScene(startGameScene, transition: reveal)
+    }
+    
     
     func selectNodeForTouch(touchLocation:CGPoint){
         
@@ -357,6 +381,11 @@ class GameScene: SKScene,SKPhysicsContactDelegate{
                 self.selectedNode.removeAllActions()
                 self.selectedNode.runAction(SKAction.rotateToAngle(0.0, duration: 0.1))
                 if touchedNode1 != nil && touchedNode1 is WaterSpriteNode == false{
+                    if touchedNode1 is AnimalSpriteNode && (touchedNode1 as AnimalSpriteNode).physicsBody?.categoryBitMask == PhysicsCategory.redAnimal {
+                        self.redBlood -= 1
+                    }else if touchedNode1 is AnimalSpriteNode && (touchedNode1 as AnimalSpriteNode).physicsBody?.categoryBitMask == PhysicsCategory.blueAnimal {
+                        self.blueBlood -= 1
+                    }
                     touchedNode1.removeFromParent()
                 }
                 println(self.selectedNode.position)
