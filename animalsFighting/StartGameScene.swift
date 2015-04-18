@@ -18,12 +18,13 @@ class StartGameScene: SKScene {
     }
     
     
-    override func touchesBegan(touches: NSSet, withEvent event: UIEvent) {
+    override func touchesBegan(touches: Set<NSObject>, withEvent event: UIEvent) {
         startGame()
+
     }
     
     func startGame(){
-        var gameScene:GameScene = GameScene.unarchiveFromFile("GameScene") as GameScene
+        var gameScene:GameScene = GameScene.unarchiveFromFile("GameScene") as! GameScene
         var reveal:SKTransition = SKTransition.doorsOpenHorizontalWithDuration(1)
         self.view?.presentScene(gameScene, transition: reveal)
     }

@@ -125,8 +125,8 @@ class GameScene: SKScene,SKPhysicsContactDelegate{
         return UIColor(red: randomRed, green: randomGreen, blue: randomBlue, alpha: 1.0)
         
     }
-    override func touchesBegan(touches: NSSet, withEvent event: UIEvent) {
-        /* Called when a touch begins */
+  
+    override func touchesBegan(touches: Set<NSObject>, withEvent event: UIEvent) {
         gameStarted = true
         for touch: AnyObject in touches {
             let location = touch.locationInNode(self)
@@ -159,10 +159,10 @@ class GameScene: SKScene,SKPhysicsContactDelegate{
     
     func selectNodeForTouch(touchLocation:CGPoint){
         
-        if selectedNode != nil && selectedNode.power > 0 && waterSpriteNode.frame.contains(touchLocation){
-            println("其他动物不可进河")
-            return
-        }
+//        if selectedNode != nil && selectedNode.power > 0 && waterSpriteNode.frame.contains(touchLocation){
+//            println("其他动物不可进河")
+//            return
+//        }
         
         var touchedNode:SKNode = self.nodeAtPoint(touchLocation)
         
@@ -179,19 +179,21 @@ class GameScene: SKScene,SKPhysicsContactDelegate{
                 nodeObject = touchedNode as? AnimalSpriteNode
             }
             if nodeObject != nil {
-                condition3 = condition2 && (selectedNode.power == 0) && (nodeObject.power == 0)
+                condition3 = condition2 && (selectedNode.power == 0) && (nodeObject.power == 0 && selectedNode.physicsBody?.categoryBitMask != nodeObject.physicsBody?.categoryBitMask)
             }
         }
         
         if condition1 || condition3{
             println("touch on WaterSpriteNode")
-            if (selectedNode != nil && selectedNode.power == 0) {
-                if selectedNode.power == 0 {//老鼠进河
+            if (selectedNode != nil){
+                if (selectedNode.power == 0) {
+                if selectedNode.power == 0{//老鼠进河
                     var destinationPosition:CGPoint = touchLocation;
                     if waterSpriteNode.frame.contains(selectedNode.position) == false{//老鼠不在岸边
                         if touchLocation.y > selectedNode.position.y {
                             //下岸入河
                             if waterSpriteNode.frame.contains(CGPointMake(selectedNode.position.x, selectedNode.position.y+selectedNode.size.height)) == false{
+                                didAnimalMove(nodeObject.position)
                                 return
                             }
                         }
@@ -199,9 +201,16 @@ class GameScene: SKScene,SKPhysicsContactDelegate{
                         if touchLocation.y < selectedNode.position.y {
                             //上岸入河
                             if waterSpriteNode.frame.contains(CGPointMake(selectedNode.position.x, selectedNode.position.y-selectedNode.size.height)) == false{
+                                didAnimalMove(nodeObject.position)
+
                                 return
                             }
                         }
+                    }
+                    
+                    if (waterSpriteNode.containsPoint(selectedNode.position)){//老鼠在河里
+                        didAnimalMove(destinationPosition)
+                        return
                     }
                     
                     
@@ -223,31 +232,48 @@ class GameScene: SKScene,SKPhysicsContactDelegate{
                     }
                     
                     didAnimalMove(destinationPosition)
-                }else {
+                    return
+                }
+                else {
                     self.selectedNode.removeAllActions()
                     self.selectedNode.runAction(SKAction.rotateToAngle(0.0, duration: 0.1))
                     println(self.selectedNode.position)
                     self.selectedNode = nil
+                    }
+                }else {
+                    if selectedNode != nil && nodeObject != nil && selectedNode.physicsBody?.categoryBitMask == nodeObject.physicsBody?.categoryBitMask {
+                        //            if selectedNode.power == nodeObject.power {
+                        //                println("选中的sprite与点击的sprite相同")
+                        //                return;
+                        //            }
+                        println("同一阵营")
+                        selectedNode.removeAllActions()
+                        selectedNode.runAction(SKAction.rotateToAngle(0.0, duration: 0.1))
+                        selectedNode = nil;
+                    }
+                return
                 }
             }
-            return
+            
+        }else {
+            if selectedNode != nil && nodeObject != nil && selectedNode.physicsBody?.categoryBitMask == nodeObject.physicsBody?.categoryBitMask {
+                //            if selectedNode.power == nodeObject.power {
+                //                println("选中的sprite与点击的sprite相同")
+                //                return;
+                //            }
+                println("同一阵营")
+                selectedNode.removeAllActions()
+                selectedNode.runAction(SKAction.rotateToAngle(0.0, duration: 0.1))
+                selectedNode = nil;
+            }
         }
        
-        if selectedNode != nil && nodeObject != nil && selectedNode.physicsBody?.categoryBitMask == nodeObject.physicsBody?.categoryBitMask {
-            if selectedNode.power == nodeObject.power {
-                println("选中的sprite与点击的sprite相同")
-                return;
-            }
-            println("同一阵营")
-            selectedNode.removeAllActions()
-            selectedNode.runAction(SKAction.rotateToAngle(0.0, duration: 0.1))
-            selectedNode = nil;
-        }
+
 
         if (selectedNode != nil) {
             if selectedNode.isEqual(nodeObject) == false {
                 
-
+                println("点击另一精灵")
                 if waterSpriteNode.frame.contains(selectedNode.position){
                     
                     var destinationPosizition:CGPoint = touchLocation
@@ -355,10 +381,11 @@ class GameScene: SKScene,SKPhysicsContactDelegate{
         }
     }
     
-    func didAnimalMove(destinationPosizition:CGPoint){
+    func didAnimalMove(var destinationPosizition:CGPoint){
         var touchedNode1:SKNode! = self.nodeAtPoint(destinationPosizition)
         if touchedNode1 is SKLabelNode {
-            touchedNode1 = touchedNode1.parent as AnimalSpriteNode
+            touchedNode1 = touchedNode1.parent as! AnimalSpriteNode
+            destinationPosizition = touchedNode1.position
         }
         if touchedNode1 is WaterSpriteNode {
             
@@ -368,11 +395,11 @@ class GameScene: SKScene,SKPhysicsContactDelegate{
         var condition0:Bool = touchedNode1 is WaterSpriteNode
         var condition1:Bool = (touchedNode1 == nil)
         var condition2:Bool = (touchedNode1 is SKScene)
-        var condition3:Bool = (condition0 == false && condition2 == false && touchedNode1 is AnimalSpriteNode && selectedNode.physicsBody?.categoryBitMask != touchedNode1.physicsBody?.categoryBitMask && ((selectedNode.power >= (touchedNode1 as AnimalSpriteNode).power)))
-        if condition0 == false && condition2 == false && selectedNode.power == 7 && (touchedNode1 as AnimalSpriteNode).power == 0 {
+        var condition3:Bool = (condition0 == false && condition2 == false && touchedNode1 is AnimalSpriteNode && selectedNode.physicsBody?.categoryBitMask != touchedNode1.physicsBody?.categoryBitMask && ((selectedNode.power >= (touchedNode1 as! AnimalSpriteNode).power)))
+        if condition0 == false && condition2 == false && selectedNode.power == 7 && (touchedNode1 as! AnimalSpriteNode).power == 0 {
             condition3 = false
         }
-        var condition4:Bool = (condition0 == false && condition2 == false && selectedNode.power == 0 && (touchedNode1 as AnimalSpriteNode).power == 7)
+        var condition4:Bool = (condition0 == false && condition2 == false && selectedNode.power == 0 && (touchedNode1 as! AnimalSpriteNode).power == 7)
         println(touchedNode1)
         
         if (condition0 || condition1 || condition2 || condition3 || condition4) {
@@ -381,9 +408,9 @@ class GameScene: SKScene,SKPhysicsContactDelegate{
                 self.selectedNode.removeAllActions()
                 self.selectedNode.runAction(SKAction.rotateToAngle(0.0, duration: 0.1))
                 if touchedNode1 != nil && touchedNode1 is WaterSpriteNode == false{
-                    if touchedNode1 is AnimalSpriteNode && (touchedNode1 as AnimalSpriteNode).physicsBody?.categoryBitMask == PhysicsCategory.redAnimal {
+                    if touchedNode1 is AnimalSpriteNode && (touchedNode1 as! AnimalSpriteNode).physicsBody?.categoryBitMask == PhysicsCategory.redAnimal {
                         self.redBlood -= 1
-                    }else if touchedNode1 is AnimalSpriteNode && (touchedNode1 as AnimalSpriteNode).physicsBody?.categoryBitMask == PhysicsCategory.blueAnimal {
+                    }else if touchedNode1 is AnimalSpriteNode && (touchedNode1 as! AnimalSpriteNode).physicsBody?.categoryBitMask == PhysicsCategory.blueAnimal {
                         self.blueBlood -= 1
                     }
                     touchedNode1.removeFromParent()
