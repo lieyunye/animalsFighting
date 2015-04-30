@@ -14,11 +14,11 @@ struct PhysicsCategory {
     static let blueAnimal     : UInt32 = 0x10
 }
 
- let blank:CGFloat = 0.0
+let blank:CGFloat = 0.0
 let typeName:String = "animal"
 
 class GameScene: SKScene,SKPhysicsContactDelegate{
-
+    
     var animalsName:[String] = ["象","虎","狮","豹","狼","狗","蛇","鼠"]
     var animalsBackgroundColors = [UIColor]()
     var animalNodes = [AnimalSpriteNode]()
@@ -40,9 +40,9 @@ class GameScene: SKScene,SKPhysicsContactDelegate{
         let animalSize:CGSize = CGSizeMake(self.frame.size.width/8.0, self.frame.size.width/8.0)
         let waterSpriteSize:CGSize = CGSizeMake(self.frame.size.width, self.frame.size.height - (animalSize.height * 4 + blank * 2))
         
-
+        
         self.backgroundColor = UIColor.blackColor()
-
+        
         for item in 0..<8 {
             animalsBackgroundColors.append(getRandomColor())
         }
@@ -75,7 +75,7 @@ class GameScene: SKScene,SKPhysicsContactDelegate{
                 blueAnimalSprite.physicsBody?.dynamic = true
                 blueAnimalSprite.physicsBody?.affectedByGravity = false
                 blueAnimalSprite.name = typeName
-
+                
                 var x:CGFloat = CGFloat(col)*animalSize.width + animalSize.width/2.0
                 var y:CGFloat = (self.frame.size.height - (CGFloat(row)*(animalSize.height + blank) + animalSize.height/2.0))
                 animalPositions.append(CGPointMake(x, y))
@@ -125,7 +125,7 @@ class GameScene: SKScene,SKPhysicsContactDelegate{
         return UIColor(red: randomRed, green: randomGreen, blue: randomBlue, alpha: 1.0)
         
     }
-  
+    
     override func touchesBegan(touches: Set<NSObject>, withEvent event: UIEvent) {
         gameStarted = true
         for touch: AnyObject in touches {
@@ -133,7 +133,7 @@ class GameScene: SKScene,SKPhysicsContactDelegate{
             selectNodeForTouch(location)
         }
     }
-   
+    
     override func update(currentTime: CFTimeInterval) {
         /* Called before each frame is rendered */
         
@@ -156,18 +156,168 @@ class GameScene: SKScene,SKPhysicsContactDelegate{
         self.view?.presentScene(startGameScene, transition: reveal)
     }
     
+    func ratesMoveFromWaterToShore(touchLocation:CGPoint){
+        var destinationPosizition:CGPoint = touchLocation
+        if touchLocation.y > selectedNode.position.y && touchLocation.y > waterSpriteNode.size.height + waterSpriteNode.frame.origin.y{
+            println("上游岸")
+            
+            destinationPosizition.x = (CGFloat(Int(touchLocation.x / selectedNode.size.width))) * selectedNode.size.width + selectedNode.size.width/2
+            destinationPosizition.y = waterSpriteNode.frame.origin.y + waterSpriteNode.size.height + selectedNode.size.height/2
+        }else if touchLocation.y < selectedNode.position.y && touchLocation.y < waterSpriteNode.frame.origin.y{
+            println("下游岸")
+            
+            destinationPosizition.x = (CGFloat(Int(touchLocation.x / selectedNode.size.width))) * selectedNode.size.width + selectedNode.size.width/2
+            destinationPosizition.y = waterSpriteNode.frame.origin.y - selectedNode.size.height/2
+            
+        }
+        didAnimalMove(destinationPosizition)
+    }
     
-    func selectNodeForTouch(touchLocation:CGPoint){
+    func ratesMoveInWater(touchLocation:CGPoint){
+        var destinationPosizition:CGPoint = touchLocation
+        destinationPosizition =  bestDestinationInWater(touchLocation)
+        didAnimalMove(destinationPosizition)
+    }
+    
+    
+    func bestDestinationInWater(touchLocation:CGPoint) -> CGPoint{
         
-//        if selectedNode != nil && selectedNode.power > 0 && waterSpriteNode.frame.contains(touchLocation){
-//            println("其他动物不可进河")
-//            return
-//        }
+        var destinationPosizition:CGPoint = touchLocation
+
+        if touchLocation.y + selectedNode.size.height/2 < waterSpriteNode.size.height + waterSpriteNode.frame.origin.y && touchLocation.y - selectedNode.size.height/2 > waterSpriteNode.frame.origin.y && touchLocation.x - selectedNode.size.height/2 > 0 && touchLocation.x + selectedNode.size.width/2 < waterSpriteNode.size.width{
+            println("good position")
+        }else {
+            if touchLocation.x - selectedNode.size.width < 0 {
+                destinationPosizition.x = selectedNode.size.width/2
+            }
+            if touchLocation.x + selectedNode.size.width > waterSpriteNode.size.width {
+                destinationPosizition.x = waterSpriteNode.size.width - selectedNode.size.width/2
+            }
+            if touchLocation.y - selectedNode.size.height < waterSpriteNode.frame.origin.y {
+                destinationPosizition.y = waterSpriteNode.frame.origin.y + selectedNode.size.height/2
+            }
+            if touchLocation.y + selectedNode.size.height > waterSpriteNode.frame.origin.y + waterSpriteNode.size.height{
+                destinationPosizition.y = waterSpriteNode.frame.origin.y + waterSpriteNode.size.height - selectedNode.size.height/2
+            }
+        }
+        
+        return destinationPosizition
+    }
+    
+    func ratesMoveFromShoreToWater(nodeObject:AnimalSpriteNode!,touchLocation:CGPoint){
+        //老鼠进河
+            var destinationPosition:CGPoint = bestDestinationInWater(touchLocation)
+                if touchLocation.y > selectedNode.position.y {
+                    //下岸入河
+                    if waterSpriteNode.frame.contains(CGPointMake(selectedNode.position.x, selectedNode.position.y+selectedNode.size.height)){
+                        println("老鼠在岸边")
+                        didAnimalMove(destinationPosition)
+                    }else {
+                        moveAndFight(touchLocation)
+                    }
+                }
+                if touchLocation.y < selectedNode.position.y {
+                    //上岸入河
+                    if waterSpriteNode.frame.contains(CGPointMake(selectedNode.position.x, selectedNode.position.y-selectedNode.size.height)){
+                        didAnimalMove(destinationPosition)
+                        println("老鼠在岸边")
+                    }else {
+                        moveAndFight(touchLocation)
+                    }
+                }
+    }
+    
+    func moveAndFight(touchLocation:CGPoint){
+        var xTouchOffset:CGFloat = touchLocation.x - selectedNode.position.x
+        var yTouchOffset:CGFloat = touchLocation.y - selectedNode.position.y
+        
+        if fabs(xTouchOffset) - selectedNode.size.width/2.0 < 0 && fabs(yTouchOffset) - selectedNode.size.width/2.0 < 0 {
+            println("移动距离上下左右不够一格")
+            return;
+        }
+        
+        if fabs(xTouchOffset) - selectedNode.size.width/2.0 > 0 && fabs(yTouchOffset) - selectedNode.size.width/2.0 > 0 {
+            if waterSpriteNode.frame.contains(selectedNode.position) == false{
+                println("不能对角线移动")
+                return;
+            }
+        }
+        
+        if xTouchOffset > 0 && fabs(xTouchOffset) > fabs(yTouchOffset){
+            println("right")
+            var destinationPosizition:CGPoint = CGPointMake(selectedNode.position.x + selectedNode.size.width, selectedNode.position.y)
+            
+            didAnimalMove(destinationPosizition)
+            
+            return
+            
+        }
+        
+        if xTouchOffset < 0 && fabs(xTouchOffset) > fabs(yTouchOffset){
+            println("left")
+            var destinationPosizition:CGPoint = CGPointMake(selectedNode.position.x - selectedNode.size.width, selectedNode.position.y)
+            
+            didAnimalMove(destinationPosizition)
+            
+            return
+            
+        }
+        if yTouchOffset > 0 && fabs(yTouchOffset) > fabs(xTouchOffset){
+            println("up")
+            var destinationPosizition:CGPoint = CGPointZero
+            
+            
+            destinationPosizition = CGPointMake(selectedNode.position.x, selectedNode.position.y + selectedNode.size.width)
+            if touchLocation.y - selectedNode.position.y > waterSpriteNode.frame.size.height + selectedNode.size.height/2 {
+                var destinationPosizitionY = selectedNode.position.y + selectedNode.size.width + waterSpriteNode.frame.size.height
+                destinationPosizition = CGPointMake(selectedNode.position.x, destinationPosizitionY)
+            }
+            
+            var touchedNode1:SKNode! = self.nodeAtPoint(destinationPosizition)
+            if touchedNode1 is WaterSpriteNode {
+                destinationPosizition = CGPointMake(selectedNode.position.x, selectedNode.position.y + selectedNode.size.width)
+            }
+            println("\(destinationPosizition)")
+            didAnimalMove(destinationPosizition)
+            
+            return
+        }
+        
+        if yTouchOffset < 0 && fabs(yTouchOffset) > fabs(xTouchOffset){
+            println("down")
+            var destinationPosizition:CGPoint = CGPointZero
+            
+            destinationPosizition = CGPointMake(selectedNode.position.x, selectedNode.position.y - selectedNode.size.width)
+            if fabs(touchLocation.y - selectedNode.position.y) > waterSpriteNode.frame.size.height + selectedNode.size.height/2 {
+                var destinationPosizitionY = selectedNode.position.y - selectedNode.size.width - waterSpriteNode.frame.size.height
+                destinationPosizition = CGPointMake(selectedNode.position.x, destinationPosizitionY)
+            }
+            var touchedNode1:SKNode! = self.nodeAtPoint(destinationPosizition)
+            if touchedNode1 is WaterSpriteNode {
+                destinationPosizition = CGPointMake(selectedNode.position.x, selectedNode.position.y - selectedNode.size.width)
+            }
+            println("\(destinationPosizition)")
+            didAnimalMove(destinationPosizition)
+            
+            return
+        }
+    }
+    
+    
+    func changeSelectedSprite(nodeObject:AnimalSpriteNode!){
+            println("同一阵营")
+            selectedNode.removeAllActions()
+            selectedNode.runAction(SKAction.rotateToAngle(0.0, duration: 0.1))
+            selectedNode = nil;
+            selectedNode = nodeObject
+            var sequence:SKAction = SKAction.sequence([SKAction.rotateByAngle(degToRad(-4.0), duration: 0.1),SKAction.rotateByAngle(0.0, duration: 0.1),SKAction.rotateByAngle(degToRad(4.0), duration: 0.1)])
+            selectedNode.runAction(SKAction.repeatActionForever(sequence))
+    }
+    func selectNodeForTouch(touchLocation:CGPoint){
         
         var touchedNode:SKNode = self.nodeAtPoint(touchLocation)
         
         var nodeObject:AnimalSpriteNode!
-
         
         var condition1:Bool = touchedNode.isKindOfClass(WaterSpriteNode)
         var condition2:Bool = selectedNode != nil
@@ -178,207 +328,48 @@ class GameScene: SKScene,SKPhysicsContactDelegate{
             }else {
                 nodeObject = touchedNode as? AnimalSpriteNode
             }
-            if nodeObject != nil {
-                condition3 = condition2 && (selectedNode.power == 0) && (nodeObject.power == 0 && selectedNode.physicsBody?.categoryBitMask != nodeObject.physicsBody?.categoryBitMask)
-            }
         }
         
-        if condition1 || condition3{
-            println("touch on WaterSpriteNode")
-            if (selectedNode != nil){
-                if (selectedNode.power == 0) {
-                if selectedNode.power == 0{//老鼠进河
-                    var destinationPosition:CGPoint = touchLocation;
-                    if waterSpriteNode.frame.contains(selectedNode.position) == false{//老鼠不在岸边
-                        if touchLocation.y > selectedNode.position.y {
-                            //下岸入河
-                            if waterSpriteNode.frame.contains(CGPointMake(selectedNode.position.x, selectedNode.position.y+selectedNode.size.height)) == false{
-                                didAnimalMove(nodeObject.position)
-                                return
-                            }
-                        }
-                        
-                        if touchLocation.y < selectedNode.position.y {
-                            //上岸入河
-                            if waterSpriteNode.frame.contains(CGPointMake(selectedNode.position.x, selectedNode.position.y-selectedNode.size.height)) == false{
-                                didAnimalMove(nodeObject.position)
+        if (condition2){
+            if selectedNode.isEqual(nodeObject){
+                println("点击了当前已选中的精灵")
+                return
+            }
 
-                                return
-                            }
-                        }
-                    }
-                    
-                    if (waterSpriteNode.containsPoint(selectedNode.position)){//老鼠在河里
-                        didAnimalMove(destinationPosition)
-                        return
-                    }
-                    
-                    
-                    if touchLocation.y + selectedNode.size.height/2 < waterSpriteNode.size.height + waterSpriteNode.frame.origin.y && touchLocation.y - selectedNode.size.height/2 > waterSpriteNode.frame.origin.y && touchLocation.x - selectedNode.size.height/2 > 0 && touchLocation.x + selectedNode.size.width/2 < waterSpriteNode.size.width{
-                        println("good position")
-                    }else {
-                        if touchLocation.x - selectedNode.size.width < 0 {
-                            destinationPosition.x = selectedNode.size.width/2
-                        }
-                        if touchLocation.x + selectedNode.size.width > waterSpriteNode.size.width {
-                            destinationPosition.x = waterSpriteNode.size.width - selectedNode.size.width/2
-                        }
-                        if touchLocation.y - selectedNode.size.height < waterSpriteNode.frame.origin.y {
-                            destinationPosition.y = waterSpriteNode.frame.origin.y + selectedNode.size.height/2
-                        }
-                        if touchLocation.y + selectedNode.size.height > waterSpriteNode.frame.origin.y + waterSpriteNode.size.height{
-                            destinationPosition.y = waterSpriteNode.frame.origin.y + waterSpriteNode.size.height - selectedNode.size.height/2
-                        }
-                    }
-                    
-                    didAnimalMove(destinationPosition)
-                    return
-                }
-                else {
-                    self.selectedNode.removeAllActions()
-                    self.selectedNode.runAction(SKAction.rotateToAngle(0.0, duration: 0.1))
-                    println(self.selectedNode.position)
-                    self.selectedNode = nil
-                    }
+            if (selectedNode.power == 0) {
+                println("老鼠相关")
+                if nodeObject != nil && selectedNode.physicsBody?.categoryBitMask == nodeObject.physicsBody?.categoryBitMask {
+                    changeSelectedSprite(nodeObject)
+                }else if waterSpriteNode.frame.contains(selectedNode.position) && waterSpriteNode.frame.contains(touchLocation) == false{
+                    ratesMoveFromWaterToShore(touchLocation)
+                }else if (waterSpriteNode.frame.contains(selectedNode.position) && waterSpriteNode.frame.contains(touchLocation)){
+                    ratesMoveInWater(touchLocation)
+                }else if (waterSpriteNode.frame.contains(selectedNode.position) == false && waterSpriteNode.frame.contains(touchLocation)) {
+                    ratesMoveFromShoreToWater(nodeObject,touchLocation: touchLocation)
                 }else {
-                    if selectedNode != nil && nodeObject != nil && selectedNode.physicsBody?.categoryBitMask == nodeObject.physicsBody?.categoryBitMask {
-                        //            if selectedNode.power == nodeObject.power {
-                        //                println("选中的sprite与点击的sprite相同")
-                        //                return;
-                        //            }
-                        println("同一阵营")
-                        selectedNode.removeAllActions()
-                        selectedNode.runAction(SKAction.rotateToAngle(0.0, duration: 0.1))
-                        selectedNode = nil;
-                    }
-                return
+                    moveAndFight(touchLocation)
                 }
-            }
-            
-        }else {
-            if selectedNode != nil && nodeObject != nil && selectedNode.physicsBody?.categoryBitMask == nodeObject.physicsBody?.categoryBitMask {
-                //            if selectedNode.power == nodeObject.power {
-                //                println("选中的sprite与点击的sprite相同")
-                //                return;
-                //            }
-                println("同一阵营")
-                selectedNode.removeAllActions()
-                selectedNode.runAction(SKAction.rotateToAngle(0.0, duration: 0.1))
-                selectedNode = nil;
-            }
-        }
-       
-
-
-        if (selectedNode != nil) {
-            if selectedNode.isEqual(nodeObject) == false {
-                
+            }else {
+                if (condition1) {
+                    println("其他动物不可进河")
+                    return
+                }
                 println("点击另一精灵")
-                if waterSpriteNode.frame.contains(selectedNode.position){
-                    
-                    var destinationPosizition:CGPoint = touchLocation
-                    if touchLocation.y > selectedNode.position.y && touchLocation.y > waterSpriteNode.size.height + waterSpriteNode.frame.origin.y{
-                        println("上游岸")
-                        
-                        destinationPosizition.x = (CGFloat(Int(touchLocation.x / selectedNode.size.width))) * selectedNode.size.width + selectedNode.size.width/2
-                        destinationPosizition.y = waterSpriteNode.frame.origin.y + waterSpriteNode.size.height + selectedNode.size.height/2
-                    }
-                    
-                    if touchLocation.y < selectedNode.position.y && touchLocation.y < waterSpriteNode.frame.origin.y{
-                        println("下游岸")
-                        
-                        destinationPosizition.x = (CGFloat(Int(touchLocation.x / selectedNode.size.width))) * selectedNode.size.width + selectedNode.size.width/2
-                        destinationPosizition.y = waterSpriteNode.frame.origin.y - selectedNode.size.height/2
-
-                    }
-                    
-                    didAnimalMove(destinationPosizition)
-                    return
-                }
-                
-                var xTouchOffset:CGFloat = touchLocation.x - selectedNode.position.x
-                var yTouchOffset:CGFloat = touchLocation.y - selectedNode.position.y
-                
-                if fabs(xTouchOffset) - selectedNode.size.width/2.0 < 0 && fabs(yTouchOffset) - selectedNode.size.width/2.0 < 0 {
-                    println("移动距离上下左右不够一格")
-                    return;
-                }
-                
-                if fabs(xTouchOffset) - selectedNode.size.width/2.0 > 0 && fabs(yTouchOffset) - selectedNode.size.width/2.0 > 0 {
-                    if waterSpriteNode.frame.contains(selectedNode.position) == false{
-                        println("不能对角线移动")
-                        return;
-                    }
-                }
-                
-                if xTouchOffset > 0 && fabs(xTouchOffset) > fabs(yTouchOffset){
-                    println("right")
-                    var destinationPosizition:CGPoint = CGPointMake(selectedNode.position.x + selectedNode.size.width, selectedNode.position.y)
-                    
-                    didAnimalMove(destinationPosizition)
-
-                    return
-                    
-                }
-                
-                if xTouchOffset < 0 && fabs(xTouchOffset) > fabs(yTouchOffset){
-                    println("left")
-                    var destinationPosizition:CGPoint = CGPointMake(selectedNode.position.x - selectedNode.size.width, selectedNode.position.y)
-                    
-                    didAnimalMove(destinationPosizition)
-
-                    return
-                    
-                }
-                if yTouchOffset > 0 && fabs(yTouchOffset) > fabs(xTouchOffset){
-                    println("up")
-                    var destinationPosizition:CGPoint = CGPointZero
-
-                    
-                        destinationPosizition = CGPointMake(selectedNode.position.x, selectedNode.position.y + selectedNode.size.width)
-                        if touchLocation.y - selectedNode.position.y > waterSpriteNode.frame.size.height + selectedNode.size.height/2 {
-                            var destinationPosizitionY = selectedNode.position.y + selectedNode.size.width + waterSpriteNode.frame.size.height
-                            destinationPosizition = CGPointMake(selectedNode.position.x, destinationPosizitionY)
-                        }
-                        
-                        var touchedNode1:SKNode! = self.nodeAtPoint(destinationPosizition)
-                        if touchedNode1 is WaterSpriteNode {
-                            destinationPosizition = CGPointMake(selectedNode.position.x, selectedNode.position.y + selectedNode.size.width)
-                        }
-                    println("\(destinationPosizition)")
-                    didAnimalMove(destinationPosizition)
-
-                    return
-                }
-                
-                if yTouchOffset < 0 && fabs(yTouchOffset) > fabs(xTouchOffset){
-                    println("down")
-                    var destinationPosizition:CGPoint = CGPointZero
-                    
-                        destinationPosizition = CGPointMake(selectedNode.position.x, selectedNode.position.y - selectedNode.size.width)
-                        if fabs(touchLocation.y - selectedNode.position.y) > waterSpriteNode.frame.size.height + selectedNode.size.height/2 {
-                            var destinationPosizitionY = selectedNode.position.y - selectedNode.size.width - waterSpriteNode.frame.size.height
-                            destinationPosizition = CGPointMake(selectedNode.position.x, destinationPosizitionY)
-                        }
-                        var touchedNode1:SKNode! = self.nodeAtPoint(destinationPosizition)
-                        if touchedNode1 is WaterSpriteNode {
-                            destinationPosizition = CGPointMake(selectedNode.position.x, selectedNode.position.y - selectedNode.size.width)
-                        }
-                    println("\(destinationPosizition)")
-                    didAnimalMove(destinationPosizition)
-                    
-                    return
+                if nodeObject != nil && selectedNode.physicsBody?.categoryBitMask == nodeObject.physicsBody?.categoryBitMask {
+                    changeSelectedSprite(nodeObject)
+                }else {
+                    moveAndFight(touchLocation)
                 }
             }
         }else {
-            selectedNode = nodeObject
-            if (selectedNode == nil) {
-                println("should selectd an animal fisrt")
-                return
+                selectedNode = nodeObject
+                if (selectedNode == nil) {
+                    println("should selectd an animal fisrt")
+                    return
+                }
+                var sequence:SKAction = SKAction.sequence([SKAction.rotateByAngle(degToRad(-4.0), duration: 0.1),SKAction.rotateByAngle(0.0, duration: 0.1),SKAction.rotateByAngle(degToRad(4.0), duration: 0.1)])
+                selectedNode.runAction(SKAction.repeatActionForever(sequence))
             }
-            var sequence:SKAction = SKAction.sequence([SKAction.rotateByAngle(degToRad(-4.0), duration: 0.1),SKAction.rotateByAngle(0.0, duration: 0.1),SKAction.rotateByAngle(degToRad(4.0), duration: 0.1)])
-            selectedNode.runAction(SKAction.repeatActionForever(sequence))
-        }
     }
     
     func didAnimalMove(var destinationPosizition:CGPoint){
