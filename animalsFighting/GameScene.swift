@@ -9,7 +9,7 @@
 import SpriteKit
 
 struct PhysicsCategory {
-    static let none      : UInt32 = 0x0
+    static let none           : UInt32 = 0x0
     static let redAnimal      : UInt32 = 0x1
     static let blueAnimal     : UInt32 = 0x10
 }
@@ -17,15 +17,16 @@ struct PhysicsCategory {
 let blank:CGFloat = 0.0
 let typeName:String = "animal"
 
-class GameScene: SKScene,SKPhysicsContactDelegate{
-    
-    var animalsName:[String] = ["象","虎","狮","豹","狼","狗","蛇","鼠"]
+class GameScene: SKScene,SKPhysicsContactDelegate,AnimalSpriteNodeDelegate
+{
+    var animalsName:[String] = ["elephant","tiger","lion","leopard","wolf","dog","snake","rate"]
     var animalsBackgroundColors = [UIColor]()
     var animalNodes = [AnimalSpriteNode]()
     var animalPositions = [CGPoint]()
     var selectedNode:AnimalSpriteNode!
     
     var waterSpriteNode:WaterSpriteNode!
+    var campSignView:SKSpriteNode!
     var gameStarted:Bool = false
     
     var redBlood:Int = 16
@@ -33,12 +34,16 @@ class GameScene: SKScene,SKPhysicsContactDelegate{
     
     var gameOver:Bool = false
     
+    var campLabel:SKLabelNode!
+    
+    var lastCategory:UInt32! = PhysicsCategory.none
+    var currentCategory:UInt32! = PhysicsCategory.none
+
     override func didMoveToView(view: SKView) {
         /* Setup your scene here */
         
-        physicsWorld.contactDelegate = self
         let animalSize:CGSize = CGSizeMake(self.frame.size.width/8.0, self.frame.size.width/8.0)
-        let waterSpriteSize:CGSize = CGSizeMake(self.frame.size.width, self.frame.size.height - (animalSize.height * 4 + blank * 2))
+        physicsWorld.contactDelegate = self
         
         
         self.backgroundColor = UIColor.blackColor()
@@ -48,9 +53,10 @@ class GameScene: SKScene,SKPhysicsContactDelegate{
         }
         for row in 0..<2 {
             for col in 0..<8 {
-                let redAnimalSprite = AnimalSpriteNode(color: UIColor(red: 1, green: 0, blue: 0, alpha: 0.5), size: animalSize)
+                var texture:SKTexture = SKTexture(imageNamed: animalsName[col])
+                let redAnimalSprite = AnimalSpriteNode(texture: texture,size: animalSize)
+                redAnimalSprite.delegate = self
                 redAnimalSprite.power = 7-col
-                redAnimalSprite .addAnimalName(animalsName[col], color: animalsBackgroundColors[col])
                 redAnimalSprite.physicsBody?.categoryBitMask = PhysicsCategory.redAnimal
                 redAnimalSprite.physicsBody?.contactTestBitMask = PhysicsCategory.blueAnimal
                 redAnimalSprite.physicsBody?.collisionBitMask = PhysicsCategory.none
@@ -66,9 +72,10 @@ class GameScene: SKScene,SKPhysicsContactDelegate{
         
         for row in 0..<2 {
             for col in 0..<8 {
-                let blueAnimalSprite = AnimalSpriteNode(color: UIColor(red: 0, green: 0, blue: 1, alpha: 0.5), size: animalSize)
+                var nameString:String = animalsName[col] + "-1"
+                let blueAnimalSprite = AnimalSpriteNode(texture: SKTexture(imageNamed: nameString),size: animalSize)
+                blueAnimalSprite.delegate = self
                 blueAnimalSprite.power = 7-col
-                blueAnimalSprite .addAnimalName(animalsName[col], color: animalsBackgroundColors[col])
                 blueAnimalSprite.physicsBody?.categoryBitMask = PhysicsCategory.blueAnimal
                 blueAnimalSprite.physicsBody?.contactTestBitMask = PhysicsCategory.redAnimal
                 blueAnimalSprite.physicsBody?.collisionBitMask = PhysicsCategory.none
@@ -93,16 +100,25 @@ class GameScene: SKScene,SKPhysicsContactDelegate{
             index++
         })
         
-        
+        let waterSpriteSize:CGSize = CGSizeMake(self.frame.size.width, self.frame.size.height - (animalSize.height * 4 + blank * 2))
+        makeWaterNode(waterSpriteSize)
+        makeCampSignView()
+    }
+    
+    func makeWaterNode(waterSpriteSize:CGSize){
         waterSpriteNode = WaterSpriteNode(color: SKColor.greenColor(), size: waterSpriteSize)
         waterSpriteNode.name = "water"
         waterSpriteNode.position = CGPointMake(CGRectGetMidX(self.frame), CGRectGetMidY(self.frame))
         self.addChild(waterSpriteNode)
-        
-        
-        
     }
     
+    func makeCampSignView(){
+        campSignView = SKSpriteNode(color: SKColor.redColor(), size: CGSizeMake(100, 50))
+        campSignView.position = CGPointMake(CGRectGetWidth(waterSpriteNode.frame)-50, CGRectGetMidY(waterSpriteNode.frame))
+        self.addChild(campSignView)
+    }
+    
+    // MARK: - Help method
     func shuffleArray<T>(var array: Array<T>) -> Array<T>
     {
         for var index = array.count - 1; index > 0; index--
@@ -126,12 +142,16 @@ class GameScene: SKScene,SKPhysicsContactDelegate{
         
     }
     
-    override func touchesBegan(touches: Set<NSObject>, withEvent event: UIEvent) {
-        gameStarted = true
-        for touch: AnyObject in touches {
-            let location = touch.locationInNode(self)
-            selectNodeForTouch(location)
+    func degToRad(degree:CGFloat) -> CGFloat{
+        return degree / CGFloat(180.0) * CGFloat(M_PI)
+    }
+    
+    func didBeginContact(contact: SKPhysicsContact) {
+        if gameStarted == false {
+            println("game not start")
+            return
         }
+        println("Hit")
     }
     
     override func update(currentTime: CFTimeInterval) {
@@ -154,6 +174,89 @@ class GameScene: SKScene,SKPhysicsContactDelegate{
         startGameScene.size = self.frame.size
         var reveal:SKTransition = SKTransition.doorsCloseHorizontalWithDuration(1)
         self.view?.presentScene(startGameScene, transition: reveal)
+    }
+    
+    override func touchesBegan(touches: Set<NSObject>, withEvent event: UIEvent) {
+        println("GameScene touchesBegan")
+
+        gameStarted = true
+        for touch: AnyObject in touches {
+            if touch.tapCount == 1{
+            let location = touch.locationInNode(self)
+            selectNodeForTouch(location)
+            }else {
+                println("只支持单击")
+            }
+        }
+    }
+    
+    // MARK: - AnimalSpriteNodeDelegate
+    func didTapOnSpriteNode(animalSpriteNode: AnimalSpriteNode) {
+        cancleSelectedSprite()
+        animalSpriteNode.flip()
+    }
+    
+    // MARK: - Game method
+    func selectNodeForTouch(touchLocation:CGPoint){
+        
+        var touchedNode:SKNode = self.nodeAtPoint(touchLocation)
+        
+        var nodeObject:AnimalSpriteNode!
+        
+        var condition1:Bool = touchedNode.isKindOfClass(WaterSpriteNode)
+        var condition2:Bool = selectedNode != nil
+        var condition3:Bool = false
+        if condition1 == false{
+            nodeObject = touchedNode as? AnimalSpriteNode
+        }
+        
+        if (condition2){
+            if selectedNode.isEqual(nodeObject){
+                println("点击了当前已选中的精灵")
+                return
+            }
+            
+            if (selectedNode.power == 0) {
+                println("老鼠相关")
+                if nodeObject != nil && selectedNode.physicsBody?.categoryBitMask == nodeObject.physicsBody?.categoryBitMask {
+                    changeSelectedSprite(nodeObject)
+                }else if waterSpriteNode.frame.contains(selectedNode.position) && waterSpriteNode.frame.contains(touchLocation) == false{
+                    ratesMoveFromWaterToShore(touchLocation)
+                }else if (waterSpriteNode.frame.contains(selectedNode.position) && waterSpriteNode.frame.contains(touchLocation)){
+                    ratesMoveInWater(touchLocation)
+                }else if (waterSpriteNode.frame.contains(selectedNode.position) == false && waterSpriteNode.frame.contains(touchLocation)) {
+                    ratesMoveFromShoreToWater(nodeObject,touchLocation: touchLocation)
+                }else {
+                    moveAndFight(touchLocation)
+                }
+            }else {
+                if (condition1) {
+                    println("其他动物不可进河")
+                    return
+                }
+                println("点击另一精灵")
+                if nodeObject != nil && selectedNode.physicsBody?.categoryBitMask == nodeObject.physicsBody?.categoryBitMask {
+                    changeSelectedSprite(nodeObject)
+                }else {
+                    moveAndFight(touchLocation)
+                }
+            }
+        }else {
+            if nodeObject != nil {
+                currentCategory = nodeObject.physicsBody?.categoryBitMask
+                if lastCategory == currentCategory {
+                    println("轮到对方啦")
+                    return
+                }
+                selectedNode = nodeObject
+                if (selectedNode == nil) {
+                    println("should selectd an animal fisrt")
+                    return
+                }
+                var sequence:SKAction = SKAction.sequence([SKAction.rotateByAngle(degToRad(-4.0), duration: 0.1),SKAction.rotateByAngle(0.0, duration: 0.1),SKAction.rotateByAngle(degToRad(4.0), duration: 0.1)])
+                selectedNode.runAction(SKAction.repeatActionForever(sequence))
+            }
+        }
     }
     
     func ratesMoveFromWaterToShore(touchLocation:CGPoint){
@@ -305,77 +408,25 @@ class GameScene: SKScene,SKPhysicsContactDelegate{
     
     
     func changeSelectedSprite(nodeObject:AnimalSpriteNode!){
-            println("同一阵营")
+        println("同一阵营")
+        cancleSelectedSprite()
+        selectedNode = nodeObject
+        var sequence:SKAction = SKAction.sequence([SKAction.rotateByAngle(degToRad(-4.0), duration: 0.1),SKAction.rotateByAngle(0.0, duration: 0.1),SKAction.rotateByAngle(degToRad(4.0), duration: 0.1)])
+        selectedNode.runAction(SKAction.repeatActionForever(sequence))
+    }
+    
+    func cancleSelectedSprite()
+    {
+        if selectedNode != nil {
             selectedNode.removeAllActions()
             selectedNode.runAction(SKAction.rotateToAngle(0.0, duration: 0.1))
-            selectedNode = nil;
-            selectedNode = nodeObject
-            var sequence:SKAction = SKAction.sequence([SKAction.rotateByAngle(degToRad(-4.0), duration: 0.1),SKAction.rotateByAngle(0.0, duration: 0.1),SKAction.rotateByAngle(degToRad(4.0), duration: 0.1)])
-            selectedNode.runAction(SKAction.repeatActionForever(sequence))
-    }
-    func selectNodeForTouch(touchLocation:CGPoint){
-        
-        var touchedNode:SKNode = self.nodeAtPoint(touchLocation)
-        
-        var nodeObject:AnimalSpriteNode!
-        
-        var condition1:Bool = touchedNode.isKindOfClass(WaterSpriteNode)
-        var condition2:Bool = selectedNode != nil
-        var condition3:Bool = false
-        if condition1 == false{
-            if touchedNode.isKindOfClass(SKLabelNode){
-                nodeObject = touchedNode.parent as? AnimalSpriteNode
-            }else {
-                nodeObject = touchedNode as? AnimalSpriteNode
-            }
+            selectedNode = nil;            
         }
-        
-        if (condition2){
-            if selectedNode.isEqual(nodeObject){
-                println("点击了当前已选中的精灵")
-                return
-            }
-
-            if (selectedNode.power == 0) {
-                println("老鼠相关")
-                if nodeObject != nil && selectedNode.physicsBody?.categoryBitMask == nodeObject.physicsBody?.categoryBitMask {
-                    changeSelectedSprite(nodeObject)
-                }else if waterSpriteNode.frame.contains(selectedNode.position) && waterSpriteNode.frame.contains(touchLocation) == false{
-                    ratesMoveFromWaterToShore(touchLocation)
-                }else if (waterSpriteNode.frame.contains(selectedNode.position) && waterSpriteNode.frame.contains(touchLocation)){
-                    ratesMoveInWater(touchLocation)
-                }else if (waterSpriteNode.frame.contains(selectedNode.position) == false && waterSpriteNode.frame.contains(touchLocation)) {
-                    ratesMoveFromShoreToWater(nodeObject,touchLocation: touchLocation)
-                }else {
-                    moveAndFight(touchLocation)
-                }
-            }else {
-                if (condition1) {
-                    println("其他动物不可进河")
-                    return
-                }
-                println("点击另一精灵")
-                if nodeObject != nil && selectedNode.physicsBody?.categoryBitMask == nodeObject.physicsBody?.categoryBitMask {
-                    changeSelectedSprite(nodeObject)
-                }else {
-                    moveAndFight(touchLocation)
-                }
-            }
-        }else {
-                selectedNode = nodeObject
-                if (selectedNode == nil) {
-                    println("should selectd an animal fisrt")
-                    return
-                }
-                var sequence:SKAction = SKAction.sequence([SKAction.rotateByAngle(degToRad(-4.0), duration: 0.1),SKAction.rotateByAngle(0.0, duration: 0.1),SKAction.rotateByAngle(degToRad(4.0), duration: 0.1)])
-                selectedNode.runAction(SKAction.repeatActionForever(sequence))
-            }
     }
     
     func didAnimalMove(var destinationPosizition:CGPoint){
         var touchedNode1:SKNode! = self.nodeAtPoint(destinationPosizition)
-        if touchedNode1 is SKLabelNode {
-            touchedNode1 = touchedNode1.parent as! AnimalSpriteNode
+        if touchedNode1 is AnimalSpriteNode {
             destinationPosizition = touchedNode1.position
         }
         if touchedNode1 is WaterSpriteNode {
@@ -399,12 +450,22 @@ class GameScene: SKScene,SKPhysicsContactDelegate{
                 self.selectedNode.removeAllActions()
                 self.selectedNode.runAction(SKAction.rotateToAngle(0.0, duration: 0.1))
                 if touchedNode1 != nil && touchedNode1 is WaterSpriteNode == false{
+                    self.lastCategory = self.selectedNode.physicsBody?.categoryBitMask
                     if touchedNode1 is AnimalSpriteNode && (touchedNode1 as! AnimalSpriteNode).physicsBody?.categoryBitMask == PhysicsCategory.redAnimal {
                         self.redBlood -= 1
+                        self.campSignView.color = SKColor.redColor()
+                        touchedNode1.removeFromParent()
                     }else if touchedNode1 is AnimalSpriteNode && (touchedNode1 as! AnimalSpriteNode).physicsBody?.categoryBitMask == PhysicsCategory.blueAnimal {
                         self.blueBlood -= 1
+                        self.campSignView.color = SKColor.blueColor()
+                        touchedNode1.removeFromParent()
+                    }else {
+                        if self.campSignView.color == SKColor.redColor(){
+                            self.campSignView.color = SKColor.blueColor()
+                        }else {
+                            self.campSignView.color = SKColor.redColor()
+                        }
                     }
-                    touchedNode1.removeFromParent()
                 }
                 println(self.selectedNode.position)
                 self.selectedNode = nil
@@ -415,19 +476,5 @@ class GameScene: SKScene,SKPhysicsContactDelegate{
             selectedNode.runAction(sequence)
             
         }
-    }
-    
-    func degToRad(degree:CGFloat) -> CGFloat{
-        return degree / CGFloat(180.0) * CGFloat(M_PI)
-    }
-    
-    func didBeginContact(contact: SKPhysicsContact) {
-        if gameStarted == false {
-            println("game not start")
-            return
-        }
-        println("Hit")
-        
-        
     }
 }
