@@ -48,6 +48,9 @@ class GameScene: SKScene,SKPhysicsContactDelegate,AnimalSpriteNodeDelegate
         
         self.backgroundColor = UIColor.blackColor()
         
+        let waterSpriteSize:CGSize = CGSizeMake(self.frame.size.width, self.frame.size.height - (animalSize.height * 4 + blank * 2))
+        makeWaterNode(waterSpriteSize)
+        
         for item in 0..<8 {
             animalsBackgroundColors.append(getRandomColor())
         }
@@ -100,12 +103,12 @@ class GameScene: SKScene,SKPhysicsContactDelegate,AnimalSpriteNodeDelegate
             index++
         })
         
-        let waterSpriteSize:CGSize = CGSizeMake(self.frame.size.width, self.frame.size.height - (animalSize.height * 4 + blank * 2))
-        makeWaterNode(waterSpriteSize)
+        
         makeCampSignView()
     }
     
     func makeWaterNode(waterSpriteSize:CGSize){
+//        waterSpriteNode = WaterSpriteNode(texture: SKTexture(imageNamed: "water"), size: waterSpriteSize)
         waterSpriteNode = WaterSpriteNode(color: SKColor.greenColor(), size: waterSpriteSize)
         waterSpriteNode.name = "water"
         waterSpriteNode.position = CGPointMake(CGRectGetMidX(self.frame), CGRectGetMidY(self.frame))
@@ -420,7 +423,7 @@ class GameScene: SKScene,SKPhysicsContactDelegate,AnimalSpriteNodeDelegate
         if selectedNode != nil {
             selectedNode.removeAllActions()
             selectedNode.runAction(SKAction.rotateToAngle(0.0, duration: 0.1))
-            selectedNode = nil;            
+            selectedNode = nil;
         }
     }
     
@@ -447,30 +450,35 @@ class GameScene: SKScene,SKPhysicsContactDelegate,AnimalSpriteNodeDelegate
         if (condition0 || condition1 || condition2 || condition3 || condition4) {
             var moveAction:SKAction = SKAction.moveTo(destinationPosizition, duration:0.3)
             var doneAction:SKAction = SKAction.runBlock({ () -> Void in
-                self.selectedNode.removeAllActions()
-                self.selectedNode.runAction(SKAction.rotateToAngle(0.0, duration: 0.1))
-                if touchedNode1 != nil && touchedNode1 is WaterSpriteNode == false{
+                if touchedNode1 != nil{
                     self.lastCategory = self.selectedNode.physicsBody?.categoryBitMask
-                    if touchedNode1 is AnimalSpriteNode && (touchedNode1 as! AnimalSpriteNode).physicsBody?.categoryBitMask == PhysicsCategory.redAnimal {
-                        self.redBlood -= 1
-                        self.campSignView.color = SKColor.redColor()
-                        touchedNode1.removeFromParent()
-                    }else if touchedNode1 is AnimalSpriteNode && (touchedNode1 as! AnimalSpriteNode).physicsBody?.categoryBitMask == PhysicsCategory.blueAnimal {
-                        self.blueBlood -= 1
-                        self.campSignView.color = SKColor.blueColor()
-                        touchedNode1.removeFromParent()
-                    }else {
+                    if touchedNode1 is WaterSpriteNode {
+                        
                         if self.campSignView.color == SKColor.redColor(){
                             self.campSignView.color = SKColor.blueColor()
                         }else {
                             self.campSignView.color = SKColor.redColor()
                         }
+                        
+                    }else {
+                        if touchedNode1 is AnimalSpriteNode && (touchedNode1 as! AnimalSpriteNode).physicsBody?.categoryBitMask == PhysicsCategory.redAnimal {
+                            self.redBlood -= 1
+                            self.campSignView.color = SKColor.redColor()
+                            touchedNode1.removeFromParent()
+                        }else if touchedNode1 is AnimalSpriteNode && (touchedNode1 as! AnimalSpriteNode).physicsBody?.categoryBitMask == PhysicsCategory.blueAnimal {
+                            self.blueBlood -= 1
+                            self.campSignView.color = SKColor.blueColor()
+                            touchedNode1.removeFromParent()
+                        }else {
+                            if self.campSignView.color == SKColor.redColor(){
+                                self.campSignView.color = SKColor.blueColor()
+                            }else {
+                                self.campSignView.color = SKColor.redColor()
+                            }
+                        }
                     }
                 }
-                println(self.selectedNode.position)
-                self.selectedNode = nil
-                
-                println(self.selectedNode)
+                self.cancleSelectedSprite()
             })
             var sequence:SKAction = SKAction.sequence([moveAction,doneAction])
             selectedNode.runAction(sequence)

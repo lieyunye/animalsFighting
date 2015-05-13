@@ -15,5 +15,10 @@ class WaterSpriteNode: SKSpriteNode {
     
     init(color:UIColor,size:CGSize){
         super.init(texture: nil, color: color, size: size)
+        userInteractionEnabled = false
+    }
+    
+    init(texture: SKTexture!, size: CGSize) {
+        super.init(texture: texture, color: nil,size: size)
     }
 }
