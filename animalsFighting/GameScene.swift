@@ -108,8 +108,8 @@ class GameScene: SKScene,SKPhysicsContactDelegate,AnimalSpriteNodeDelegate
     }
     
     func makeWaterNode(waterSpriteSize:CGSize){
-//        waterSpriteNode = WaterSpriteNode(texture: SKTexture(imageNamed: "water"), size: waterSpriteSize)
-        waterSpriteNode = WaterSpriteNode(color: SKColor.greenColor(), size: waterSpriteSize)
+        waterSpriteNode = WaterSpriteNode(texture: SKTexture(imageNamed: "water"), size: waterSpriteSize)
+        //waterSpriteNode = WaterSpriteNode(color: SKColor.greenColor(), size: waterSpriteSize)
         waterSpriteNode.name = "water"
         waterSpriteNode.position = CGPointMake(CGRectGetMidX(self.frame), CGRectGetMidY(self.frame))
         self.addChild(waterSpriteNode)
