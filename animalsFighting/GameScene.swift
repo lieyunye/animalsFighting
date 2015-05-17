@@ -109,7 +109,7 @@ class GameScene: SKScene,SKPhysicsContactDelegate,AnimalSpriteNodeDelegate
     
     func makeWaterNode(waterSpriteSize:CGSize){
         waterSpriteNode = WaterSpriteNode(texture: SKTexture(imageNamed: "water"), size: waterSpriteSize)
-        //waterSpriteNode = WaterSpriteNode(color: SKColor.greenColor(), size: waterSpriteSize)
+//        waterSpriteNode = WaterSpriteNode(color: SKColor.greenColor(), size: waterSpriteSize)
         waterSpriteNode.name = "water"
         waterSpriteNode.position = CGPointMake(CGRectGetMidX(self.frame), CGRectGetMidY(self.frame))
         self.addChild(waterSpriteNode)
@@ -179,17 +179,49 @@ class GameScene: SKScene,SKPhysicsContactDelegate,AnimalSpriteNodeDelegate
         self.view?.presentScene(startGameScene, transition: reveal)
     }
     
+    func colorizeChoosenSpriteNodeWithColor(color:SKColor,touchLocation:CGPoint){
+        if selectedNode != nil {
+            var touchedNode:SKNode = self.nodeAtPoint(touchLocation)
+            var nodeObject:AnimalSpriteNode!
+            var condition:Bool = touchedNode.isKindOfClass(WaterSpriteNode)
+            if condition == false{
+                nodeObject = touchedNode.parent as? AnimalSpriteNode
+            }
+            if nodeObject != nil && selectedNode == nodeObject {
+                var changeColorAction:SKAction = SKAction.colorizeWithColor(color, colorBlendFactor: 1.0, duration: 0.2)
+                var selectAction:SKAction = SKAction.sequence([changeColorAction])
+                selectedNode.runAction(selectAction, completion: { () -> Void in
+                    self.selectedNode.color = color
+                })
+            }
+        }
+    }
+    
     override func touchesBegan(touches: Set<NSObject>, withEvent event: UIEvent) {
         println("GameScene touchesBegan")
 
         gameStarted = true
         for touch: AnyObject in touches {
             if touch.tapCount == 1{
-            let location = touch.locationInNode(self)
-            selectNodeForTouch(location)
+                let location = touch.locationInNode(self)
+                selectNodeForTouch(location)
+                colorizeChoosenSpriteNodeWithColor(SKColor(red: 0.26, green: 0.69, blue: 0.78, alpha: 1), touchLocation: location)
             }else {
                 println("只支持单击")
             }
+        }
+    }
+    override func touchesCancelled(touches: Set<NSObject>!, withEvent event: UIEvent!) {
+        for touch: AnyObject in touches {
+            let location = touch.locationInNode(self)
+            colorizeChoosenSpriteNodeWithColor(SKColor.clearColor(), touchLocation: location)
+        }
+    }
+
+    override func touchesEnded(touches: Set<NSObject>, withEvent event: UIEvent) {
+        for touch: AnyObject in touches {
+            let location = touch.locationInNode(self)
+            colorizeChoosenSpriteNodeWithColor(SKColor.clearColor(), touchLocation: location)
         }
     }
     
@@ -210,7 +242,7 @@ class GameScene: SKScene,SKPhysicsContactDelegate,AnimalSpriteNodeDelegate
         var condition2:Bool = selectedNode != nil
         var condition3:Bool = false
         if condition1 == false{
-            nodeObject = touchedNode as? AnimalSpriteNode
+            nodeObject = touchedNode.parent as? AnimalSpriteNode
         }
         
         if (condition2){
@@ -233,7 +265,7 @@ class GameScene: SKScene,SKPhysicsContactDelegate,AnimalSpriteNodeDelegate
                     moveAndFight(touchLocation)
                 }
             }else {
-                if (condition1) {
+                if (waterSpriteNode.containsPoint(touchLocation)) {
                     println("其他动物不可进河")
                     return
                 }
@@ -429,8 +461,9 @@ class GameScene: SKScene,SKPhysicsContactDelegate,AnimalSpriteNodeDelegate
     
     func didAnimalMove(var destinationPosizition:CGPoint){
         var touchedNode1:SKNode! = self.nodeAtPoint(destinationPosizition)
-        if touchedNode1 is AnimalSpriteNode {
-            destinationPosizition = touchedNode1.position
+        if touchedNode1.parent is AnimalSpriteNode {
+            destinationPosizition = touchedNode1.parent!.position
+            touchedNode1 = touchedNode1.parent
         }
         if touchedNode1 is WaterSpriteNode {
             
@@ -445,7 +478,6 @@ class GameScene: SKScene,SKPhysicsContactDelegate,AnimalSpriteNodeDelegate
             condition3 = false
         }
         var condition4:Bool = (condition0 == false && condition2 == false && selectedNode.power == 0 && (touchedNode1 as! AnimalSpriteNode).power == 7)
-        println(touchedNode1)
         
         if (condition0 || condition1 || condition2 || condition3 || condition4) {
             var moveAction:SKAction = SKAction.moveTo(destinationPosizition, duration:0.3)

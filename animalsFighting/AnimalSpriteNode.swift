@@ -19,12 +19,21 @@ class AnimalSpriteNode: SKSpriteNode {
     var hasFliped:Bool = false
     var animalTexture:SKTexture!
     var delegate:AnimalSpriteNodeDelegate!
+    var backgroud:SKSpriteNode!
+    var foregroud:AnimalPicSpriteNode!
     
     init(texture: SKTexture!, size: CGSize){
-        super.init(texture: SKTexture(imageNamed:"card_back"), color: nil, size: size)
+        super.init(texture: nil, color: nil, size: size)
         animalTexture = texture;
         self.physicsBody = SKPhysicsBody(rectangleOfSize: size)
         userInteractionEnabled = true
+        
+        backgroud = SKSpriteNode(color: nil, size: size)
+        backgroud.userInteractionEnabled = false
+        self.addChild(backgroud)
+        
+        foregroud = AnimalPicSpriteNode(texture: SKTexture(imageNamed:"card_back"), size: size)
+        self.addChild(foregroud)
     }
 
     required init?(coder aDecoder: NSCoder) {
@@ -36,7 +45,6 @@ class AnimalSpriteNode: SKSpriteNode {
         println("AnimalSpriteNode touchesBegan")
         for touch: AnyObject in touches {
             if touch.tapCount == 1{
-//                flip()
                 delegate.didTapOnSpriteNode(self)
             }else {
                 println("只支持单击")
@@ -50,7 +58,7 @@ class AnimalSpriteNode: SKSpriteNode {
         setScale(1.0)
         if hasFliped == false{
             runAction(firstHalfFlip){
-                self.texture = self.animalTexture
+                self.foregroud.texture = self.animalTexture
                 self.hasFliped = true
                 self.userInteractionEnabled = false
                 self.runAction(secondHalfFlip)
