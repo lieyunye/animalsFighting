@@ -45,6 +45,7 @@ class GameViewController: UIViewController {
             scene.scaleMode = .AspectFill
             
             skView.presentScene(scene)
+        skView.ignoresSiblingOrder = false
         
         
     }

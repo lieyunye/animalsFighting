@@ -179,6 +179,21 @@ class GameScene: SKScene,SKPhysicsContactDelegate,AnimalSpriteNodeDelegate
         self.view?.presentScene(startGameScene, transition: reveal)
     }
     
+    func showTips(){
+        let myLabel = SKLabelNode(fontNamed:"Chalkduster")
+        myLabel.text = "轮到对方啦";
+        myLabel.fontSize = 65;
+        myLabel.fontColor = SKColor.whiteColor()
+        myLabel.horizontalAlignmentMode = SKLabelHorizontalAlignmentMode.Center
+        myLabel.verticalAlignmentMode = SKLabelVerticalAlignmentMode.Center
+        myLabel.position = CGPoint(x:CGRectGetMidX(self.frame), y:CGRectGetMidY(self.frame));
+        self.addChild(myLabel)
+        var action:SKAction = SKAction.waitForDuration(1)
+        self.runAction(action, completion: { () -> Void in
+            myLabel.removeFromParent()
+        })
+    }
+    
     func colorizeChoosenSpriteNodeWithColor(color:SKColor,touchLocation:CGPoint){
         if selectedNode != nil {
             var touchedNode:SKNode = self.nodeAtPoint(touchLocation)
@@ -281,6 +296,7 @@ class GameScene: SKScene,SKPhysicsContactDelegate,AnimalSpriteNodeDelegate
                 currentCategory = nodeObject.physicsBody?.categoryBitMask
                 if lastCategory == currentCategory {
                     println("轮到对方啦")
+                    showTips()
                     return
                 }
                 selectedNode = nodeObject
