@@ -7,7 +7,7 @@
 //
 
 import SpriteKit
-
+import GameKit
 class EndGameScene: SKScene {
     
     override func didMoveToView(view: SKView) {

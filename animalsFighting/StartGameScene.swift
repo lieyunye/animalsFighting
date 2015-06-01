@@ -15,6 +15,10 @@ class StartGameScene: SKScene {
         var tap2Start:SKSpriteNode = SKSpriteNode(imageNamed: "TapToStart")
         self.addChild(tap2Start)
         tap2Start.position = CGPointMake(CGRectGetMidX(self.frame), CGRectGetMidY(self.frame))
+        
+        NSNotificationCenter.defaultCenter().addObserver(self, selector: "showAuthenticationViewController", name: PresentAuthenticationViewController, object: nil)
+        
+        GameKitHelper.sharedInstance.authenticateLocalPlayer()
     }
     
     
@@ -27,6 +31,15 @@ class StartGameScene: SKScene {
         var gameScene:GameScene = GameScene.unarchiveFromFile("GameScene") as! GameScene
         var reveal:SKTransition = SKTransition.doorsOpenHorizontalWithDuration(1)
         self.view?.presentScene(gameScene, transition: reveal)
+    }
+    
+    func showAuthenticationViewController(){
+        var gameKitHelper:GameKitHelper = GameKitHelper.sharedInstance
+        var vc:UIViewController! = self.view?.window?.rootViewController
+        vc.presentViewController(gameKitHelper.authenticationViewController, animated: true) { () -> Void in
+            
+        }
+
     }
 }
 
