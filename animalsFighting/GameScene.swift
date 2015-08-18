@@ -7,6 +7,8 @@
 //
 
 import SpriteKit
+import GameKit
+
 
 struct PhysicsCategory {
     static let none           : UInt32 = 0x0
@@ -17,7 +19,11 @@ struct PhysicsCategory {
 let blank:CGFloat = 0.0
 let typeName:String = "animal"
 
-class GameScene: SKScene,SKPhysicsContactDelegate,AnimalSpriteNodeDelegate
+protocol GameSceneDelegate {
+    func didMoveItem(selectNodePosition:CGPoint, destinationPosizition:CGPoint)
+}
+
+class GameScene: SKScene,SKPhysicsContactDelegate,AnimalSpriteNodeDelegate,StartGameSceneDelegate
 {
     var animalsName:[String] = ["elephant","tiger","lion","leopard","wolf","dog","snake","rate"]
     var animalsBackgroundColors = [UIColor]()
@@ -31,7 +37,6 @@ class GameScene: SKScene,SKPhysicsContactDelegate,AnimalSpriteNodeDelegate
     
     var redBlood:Int = 16
     var blueBlood:Int = 16
-    
     var gameOver:Bool = false
     
     var campLabel:SKLabelNode!
@@ -39,6 +44,8 @@ class GameScene: SKScene,SKPhysicsContactDelegate,AnimalSpriteNodeDelegate
     var lastCategory:UInt32! = PhysicsCategory.none
     var currentCategory:UInt32! = PhysicsCategory.none
 
+    var gameSceneDelegate:GameSceneDelegate?
+    
     override func didMoveToView(view: SKView) {
         /* Setup your scene here */
         
@@ -247,6 +254,15 @@ class GameScene: SKScene,SKPhysicsContactDelegate,AnimalSpriteNodeDelegate
     }
     
     // MARK: - Game method
+    
+    func setSelectNodeWithPosition(position:CGPoint) {
+        var animalPicSpriteNode : AnimalPicSpriteNode = self.nodeAtPoint(position) as! AnimalPicSpriteNode
+        selectedNode = animalPicSpriteNode.parent as! AnimalSpriteNode
+        if selectedNode == nil {
+            println("网络传输不合法的当前node坐标")
+        }
+    }
+    
     func selectNodeForTouch(touchLocation:CGPoint){
         
         var touchedNode:SKNode = self.nodeAtPoint(touchLocation)
@@ -526,6 +542,7 @@ class GameScene: SKScene,SKPhysicsContactDelegate,AnimalSpriteNodeDelegate
                         }
                     }
                 }
+                self.gameSceneDelegate?.didMoveItem(self.selectedNode.position, destinationPosizition: destinationPosizition)
                 self.cancleSelectedSprite()
             })
             var sequence:SKAction = SKAction.sequence([moveAction,doneAction])
@@ -533,4 +550,16 @@ class GameScene: SKScene,SKPhysicsContactDelegate,AnimalSpriteNodeDelegate
             
         }
     }
+    
+    
+    // MARK:GameSceneDelegate
+    func didRecivedData()
+    {
+    
+    }
+    
+    func matchDidReceiveDataFromPlayer(match:GKMatch,data:NSData,playerID:String)
+    {
+    }
+    
 }

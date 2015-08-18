@@ -30,6 +30,8 @@ class GameViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
 
+        NSNotificationCenter.defaultCenter().addObserver(self, selector:"playerAuthenticated", name: LocalPlayerIsAuthenticated, object: nil)
+
         var scene:StartGameScene = StartGameScene()
         scene.size = self.view.frame.size
         
@@ -70,4 +72,24 @@ class GameViewController: UIViewController {
     override func prefersStatusBarHidden() -> Bool {
         return true
     }
+    
+//    - (void)playerAuthenticated {
+//    
+//    SKView *skView = (SKView*)self.view;
+//    GameScene *scene = (GameScene*)skView.scene;
+//    
+//    _networkingEngine = [[MultiplayerNetworking alloc] init];
+//    _networkingEngine.delegate = scene;
+//    scene.networkingEngine = _networkingEngine;
+//    
+//    [[GameKitHelper sharedGameKitHelper] findMatchWithMinPlayers:2 maxPlayers:2 viewController:self delegate:_networkingEngine];
+//    }
+    
+    func playerAuthenticated() {
+        
+        GameKitHelper.sharedInstance.findMatchWithMinPlayers(2, maxPlayers:2, viewController: self)
+        
+    }
+    
+    
 }
