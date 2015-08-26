@@ -24,10 +24,11 @@ protocol GameSceneDelegate {
     func didMoveItem(selectNodePosition:CGPoint, destinationPosizition:CGPoint)
 }
 
-class GameScene: SKScene,SKPhysicsContactDelegate,AnimalSpriteNodeDelegate,StartGameSceneDelegate
+class GameScene: SKScene, SKPhysicsContactDelegate
 {
     var animalsName:[String] = ["elephant","tiger","lion","leopard","wolf","dog","snake","rate"]
     var animalPositions = [CGPoint]()
+    var animalPositionsFromNet = [CGPoint]()
     var selectedNode:AnimalSpriteNode!
     
     var waterSpriteNode:WaterSpriteNode!
@@ -54,9 +55,110 @@ class GameScene: SKScene,SKPhysicsContactDelegate,AnimalSpriteNodeDelegate,Start
         let animalSize:CGSize = CGSizeMake(self.frame.size.width/8.0, self.frame.size.width/8.0)
         let waterSpriteSize:CGSize = CGSizeMake(self.frame.size.width, self.frame.size.height - (animalSize.height * 4 + blank * 2))
         makeWaterNode(waterSpriteSize)
+        makeAnimalNodes(animalSize)
         
-        println(animalPositions)
+        if animalPositionsFromNet.count != 0 {
+            animalPositions = animalPositionsFromNet
+        }
+        refreshAnimalsPostion()
         makeCampSignView()
+    }
+    
+    //MARK: - SKPhysicsContactDelegate
+    func didBeginContact(contact: SKPhysicsContact) {
+        if gameStarted == false {
+            println("game not start")
+            return
+        }
+        println("Hit")
+    }
+    
+    override func update(currentTime: CFTimeInterval) {
+        /* Called before each frame is rendered */
+        
+        if gameOver {
+            return
+        }
+        if redBlood == 0 || blueBlood == 0{
+            print("redBlood \(redBlood)")
+            print("blueBlood \(blueBlood)")
+            gameOver = true
+            endGame()
+        }
+        
+    }
+    
+    override func touchesBegan(touches: Set<NSObject>, withEvent event: UIEvent) {
+        println("GameScene touchesBegan")
+
+        gameStarted = true
+        for touch: AnyObject in touches {
+            if touch.tapCount == 1{
+                let location = touch.locationInNode(self)
+                selectNodeForTouch(location)
+                colorizeChoosenSpriteNodeWithColor(SKColor(red: 0.26, green: 0.69, blue: 0.78, alpha: 1), touchLocation: location)
+            }else {
+                println("只支持单击")
+            }
+        }
+    }
+    
+    override func touchesCancelled(touches: Set<NSObject>!, withEvent event: UIEvent!) {
+        for touch: AnyObject in touches {
+            let location = touch.locationInNode(self)
+            colorizeChoosenSpriteNodeWithColor(SKColor.clearColor(), touchLocation: location)
+        }
+    }
+
+    override func touchesEnded(touches: Set<NSObject>, withEvent event: UIEvent) {
+        for touch: AnyObject in touches {
+            let location = touch.locationInNode(self)
+            colorizeChoosenSpriteNodeWithColor(SKColor.clearColor(), touchLocation: location)
+        }
+    }
+    
+}
+
+extension GameScene : AnimalSpriteNodeDelegate {
+    // MARK: - AnimalSpriteNodeDelegate
+    
+    func didTapOnSpriteNode(animalSpriteNode: AnimalSpriteNode){
+        cancleSelectedSprite()
+        animalSpriteNode.flip()
+        self.gameSceneDelegate?.didTapOnSpriteNode(animalSpriteNode.position)
+    }
+    
+    func didRecievedFilpPosition(position:CGPoint){
+        var animalPicSpriteNode : AnimalPicSpriteNode = self.nodeAtPoint(position) as! AnimalPicSpriteNode
+        var animalSpriteNode:AnimalSpriteNode? = (animalPicSpriteNode.parent as! AnimalSpriteNode)
+        if animalSpriteNode == nil {
+            println("网络传输不合法的当前node坐标")
+        }else {
+            cancleSelectedSprite()
+            animalSpriteNode!.flip()
+        }
+        
+    }
+}
+
+extension GameScene {
+    
+    func makeAnimalPositions(animalSize:CGSize){
+        for row in 0..<2 {
+            for col in 0..<8 {
+                var x:CGFloat = CGFloat(col)*animalSize.width + animalSize.width/2.0
+                var y:CGFloat = CGFloat(row)*(animalSize.height + blank) + animalSize.height/2.0
+                animalPositions.append(CGPointMake(x, y))
+            }
+        }
+        
+        for row in 0..<2 {
+            for col in 0..<8 {
+                var x:CGFloat = CGFloat(col)*animalSize.width + animalSize.width/2.0
+                var y:CGFloat = (self.frame.size.height - (CGFloat(row)*(animalSize.height + blank) + animalSize.height/2.0))
+                animalPositions.append(CGPointMake(x, y))
+            }
+        }
     }
     
     func makeAnimalNodes(animalSize:CGSize) {
@@ -72,9 +174,9 @@ class GameScene: SKScene,SKPhysicsContactDelegate,AnimalSpriteNodeDelegate,Start
                 redAnimalSprite.physicsBody?.dynamic = true
                 redAnimalSprite.physicsBody?.affectedByGravity = false
                 redAnimalSprite.name = typeName
+                
                 var x:CGFloat = CGFloat(col)*animalSize.width + animalSize.width/2.0
                 var y:CGFloat = CGFloat(row)*(animalSize.height + blank) + animalSize.height/2.0
-                animalPositions.append(CGPointMake(x, y))
                 self.addChild(redAnimalSprite)
             }
         }
@@ -94,11 +196,11 @@ class GameScene: SKScene,SKPhysicsContactDelegate,AnimalSpriteNodeDelegate,Start
                 
                 var x:CGFloat = CGFloat(col)*animalSize.width + animalSize.width/2.0
                 var y:CGFloat = (self.frame.size.height - (CGFloat(row)*(animalSize.height + blank) + animalSize.height/2.0))
-                animalPositions.append(CGPointMake(x, y))
                 self.addChild(blueAnimalSprite)
             }
         }
     }
+    
     
     func refreshAnimalsPostion() {
         var index:Int = 0
@@ -126,30 +228,7 @@ class GameScene: SKScene,SKPhysicsContactDelegate,AnimalSpriteNodeDelegate,Start
     func degToRad(degree:CGFloat) -> CGFloat{
         return degree / CGFloat(180.0) * CGFloat(M_PI)
     }
-    
-    func didBeginContact(contact: SKPhysicsContact) {
-        if gameStarted == false {
-            println("game not start")
-            return
-        }
-        println("Hit")
-    }
-    
-    override func update(currentTime: CFTimeInterval) {
-        /* Called before each frame is rendered */
-        
-        if gameOver {
-            return
-        }
-        if redBlood == 0 || blueBlood == 0{
-            print("redBlood \(redBlood)")
-            print("blueBlood \(blueBlood)")
-            gameOver = true
-            endGame()
-        }
-        
-    }
-    
+
     func endGame() {
         var startGameScene:StartGameScene = StartGameScene()
         startGameScene.size = self.frame.size
@@ -188,55 +267,6 @@ class GameScene: SKScene,SKPhysicsContactDelegate,AnimalSpriteNodeDelegate,Start
                 })
             }
         }
-    }
-    
-    override func touchesBegan(touches: Set<NSObject>, withEvent event: UIEvent) {
-        println("GameScene touchesBegan")
-
-        gameStarted = true
-        for touch: AnyObject in touches {
-            if touch.tapCount == 1{
-                let location = touch.locationInNode(self)
-                selectNodeForTouch(location)
-                colorizeChoosenSpriteNodeWithColor(SKColor(red: 0.26, green: 0.69, blue: 0.78, alpha: 1), touchLocation: location)
-            }else {
-                println("只支持单击")
-            }
-        }
-    }
-    
-    override func touchesCancelled(touches: Set<NSObject>!, withEvent event: UIEvent!) {
-        for touch: AnyObject in touches {
-            let location = touch.locationInNode(self)
-            colorizeChoosenSpriteNodeWithColor(SKColor.clearColor(), touchLocation: location)
-        }
-    }
-
-    override func touchesEnded(touches: Set<NSObject>, withEvent event: UIEvent) {
-        for touch: AnyObject in touches {
-            let location = touch.locationInNode(self)
-            colorizeChoosenSpriteNodeWithColor(SKColor.clearColor(), touchLocation: location)
-        }
-    }
-    
-    // MARK: - AnimalSpriteNodeDelegate
-    
-    func didTapOnSpriteNode(animalSpriteNode: AnimalSpriteNode){
-        cancleSelectedSprite()
-        animalSpriteNode.flip()
-        self.gameSceneDelegate?.didTapOnSpriteNode(animalSpriteNode.position)
-    }
-    
-    func didRecievedFilpPosition(position:CGPoint){
-        var animalPicSpriteNode : AnimalPicSpriteNode = self.nodeAtPoint(position) as! AnimalPicSpriteNode
-        var animalSpriteNode:AnimalSpriteNode? = (animalPicSpriteNode.parent as! AnimalSpriteNode)
-        if animalSpriteNode == nil {
-            println("网络传输不合法的当前node坐标")
-        }else {
-            cancleSelectedSprite()
-            animalSpriteNode!.flip()
-        }
-        
     }
     
     // MARK: - Game method
@@ -338,7 +368,7 @@ class GameScene: SKScene,SKPhysicsContactDelegate,AnimalSpriteNodeDelegate,Start
     func bestDestinationInWater(touchLocation:CGPoint) -> CGPoint{
         
         var destinationPosizition:CGPoint = touchLocation
-
+        
         if touchLocation.y + selectedNode.size.height/2 < waterSpriteNode.size.height + waterSpriteNode.frame.origin.y && touchLocation.y - selectedNode.size.height/2 > waterSpriteNode.frame.origin.y && touchLocation.x - selectedNode.size.height/2 > 0 && touchLocation.x + selectedNode.size.width/2 < waterSpriteNode.size.width{
             println("good position")
         }else {
@@ -361,25 +391,25 @@ class GameScene: SKScene,SKPhysicsContactDelegate,AnimalSpriteNodeDelegate,Start
     
     func ratesMoveFromShoreToWater(nodeObject:AnimalSpriteNode!,touchLocation:CGPoint){
         //老鼠进河
-            var destinationPosition:CGPoint = bestDestinationInWater(touchLocation)
-                if touchLocation.y > selectedNode.position.y {
-                    //下岸入河
-                    if waterSpriteNode.frame.contains(CGPointMake(selectedNode.position.x, selectedNode.position.y+selectedNode.size.height)){
-                        println("老鼠在岸边")
-                        didAnimalMove(destinationPosition,isFromNet: false)
-                    }else {
-                        moveAndFight(touchLocation)
-                    }
-                }
-                if touchLocation.y < selectedNode.position.y {
-                    //上岸入河
-                    if waterSpriteNode.frame.contains(CGPointMake(selectedNode.position.x, selectedNode.position.y-selectedNode.size.height)){
-                        didAnimalMove(destinationPosition, isFromNet: false)
-                        println("老鼠在岸边")
-                    }else {
-                        moveAndFight(touchLocation)
-                    }
-                }
+        var destinationPosition:CGPoint = bestDestinationInWater(touchLocation)
+        if touchLocation.y > selectedNode.position.y {
+            //下岸入河
+            if waterSpriteNode.frame.contains(CGPointMake(selectedNode.position.x, selectedNode.position.y+selectedNode.size.height)){
+                println("老鼠在岸边")
+                didAnimalMove(destinationPosition,isFromNet: false)
+            }else {
+                moveAndFight(touchLocation)
+            }
+        }
+        if touchLocation.y < selectedNode.position.y {
+            //上岸入河
+            if waterSpriteNode.frame.contains(CGPointMake(selectedNode.position.x, selectedNode.position.y-selectedNode.size.height)){
+                didAnimalMove(destinationPosition, isFromNet: false)
+                println("老鼠在岸边")
+            }else {
+                moveAndFight(touchLocation)
+            }
+        }
     }
     
     func moveAndFight(touchLocation:CGPoint){
@@ -538,16 +568,6 @@ class GameScene: SKScene,SKPhysicsContactDelegate,AnimalSpriteNodeDelegate,Start
             
         }
     }
-    
-    
-    // MARK:GameSceneDelegate
-    func didRecivedData()
-    {
-    
-    }
-    
-    func matchDidReceiveDataFromPlayer(match:GKMatch,data:NSData,playerID:String)
-    {
-    }
-    
 }
+
+

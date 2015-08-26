@@ -80,9 +80,8 @@ class StartGameScene: SKScene, MultiplayerNetworkingDelegate, MCManagerDelegate,
     func createMapAndSyncPositions(){
         gameScene = GameScene.unarchiveFromFile("GameScene") as? GameScene
         let animalSize:CGSize = CGSizeMake(gameScene!.frame.size.width/8.0, gameScene!.frame.size.width/8.0)
-        gameScene?.makeAnimalNodes(animalSize)
-        gameScene?.animalPositions = shuffleArray(gameScene!.animalPositions)
-        gameScene?.refreshAnimalsPostion()
+        gameScene?.makeAnimalPositions(animalSize)
+        gameScene?.animalPositionsFromNet = shuffleArray(gameScene!.animalPositions)
         gameScene?.gameSceneDelegate = self
         syncPositions()
     }
@@ -91,8 +90,7 @@ class StartGameScene: SKScene, MultiplayerNetworkingDelegate, MCManagerDelegate,
         let message = Message()
         message.messageType = MessageType.MessageTypeGameBegin
         message.messageString = "sss"
-        message.animalPositions = gameScene?.animalPositions
-        println("positions+++++++++\(message.animalPositions)")
+        message.animalPositions = gameScene?.animalPositionsFromNet
         mcManager?.sendData(message)
     }
 
@@ -100,11 +98,8 @@ class StartGameScene: SKScene, MultiplayerNetworkingDelegate, MCManagerDelegate,
     func startGame(positions:[CGPoint]){
         gameScene = GameScene.unarchiveFromFile("GameScene") as? GameScene
         let animalSize:CGSize = CGSizeMake(gameScene!.frame.size.width/8.0, gameScene!.frame.size.width/8.0)
-        gameScene?.makeAnimalNodes(animalSize)
-        gameScene?.animalPositions = positions
-        gameScene?.refreshAnimalsPostion()
+        gameScene?.animalPositionsFromNet = positions
         gameScene?.gameSceneDelegate = self
-        println("positions+++++++++\(positions)")
     }
     
     func push2Game(){
