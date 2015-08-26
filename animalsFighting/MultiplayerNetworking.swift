@@ -31,10 +31,10 @@ class MultiplayerNetworking:GameKitHelperDelegate{
         println("matchStarted")
 //        var data:NSData = "matchStarted".dataUsingEncoding(NSUTF8StringEncoding, allowLossyConversion: true)!
         var message : Message = Message()
-        message._messageString = "matchStarted"
-        message._messageType = MessageType.MessageTypeGameBegin
-        message.sourcePosition = CGPoint(x: 1,y: 1)
-        message.destinationPosition = CGPoint(x: 2, y: 2)
+//        message._messageString = "matchStarted"
+//        message._messageType = MessageType.MessageTypeGameBegin
+//        message.sourcePosition = CGPoint(x: 1,y: 1)
+//        message.destinationPosition = CGPoint(x: 2, y: 2)
         sendData(message)
     }
     

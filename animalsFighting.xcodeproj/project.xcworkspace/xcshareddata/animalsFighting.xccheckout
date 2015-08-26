@@ -7,14 +7,14 @@
 	<key>IDESourceControlProjectIdentifier</key>
 	<string>5B964AD1-D1D5-47E3-A5C8-8F2C05933485</string>
 	<key>IDESourceControlProjectName</key>
-	<string>animalsFighting</string>
+	<string>project</string>
 	<key>IDESourceControlProjectOriginsDictionary</key>
 	<dict>
 		<key>D7A3DB01CA7CB9159AA076EACD3533E51C724D10</key>
 		<string>https://github.com/lieyunye/animalsFighting.git</string>
 	</dict>
 	<key>IDESourceControlProjectPath</key>
-	<string>animalsFighting.xcodeproj</string>
+	<string>animalsFighting.xcodeproj/project.xcworkspace</string>
 	<key>IDESourceControlProjectRelativeInstallPathDictionary</key>
 	<dict>
 		<key>D7A3DB01CA7CB9159AA076EACD3533E51C724D10</key>

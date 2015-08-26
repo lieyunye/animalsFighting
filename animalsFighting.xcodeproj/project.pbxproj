@@ -21,9 +21,15 @@
 		FC39305C1B82AE5F005C5733 /* MCManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC39305B1B82AE5F005C5733 /* MCManager.swift */; };
 		FC422FC81B06F8A900623336 /* AnimalPicSpriteNode.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC422FC71B06F8A900623336 /* AnimalPicSpriteNode.swift */; };
 		FC422FD21B0D4BA500623336 /* GameKitHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC422FD11B0D4BA500623336 /* GameKitHelper.swift */; };
+		FCD05F8B1B8D38D600B09C7A /* Color.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD05F821B8D38D600B09C7A /* Color.swift */; };
+		FCD05F8C1B8D38D600B09C7A /* Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = FCD05F841B8D38D600B09C7A /* Info.plist */; };
+		FCD05F8D1B8D38D600B09C7A /* Loggerithm.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD05F861B8D38D600B09C7A /* Loggerithm.swift */; };
+		FCD05F8E1B8D38D600B09C7A /* Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = FCD05F881B8D38D600B09C7A /* Info.plist */; };
+		FCD05F8F1B8D38D600B09C7A /* Type.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD05F8A1B8D38D600B09C7A /* Type.swift */; };
 		FCD445491AC69FDF0039FD1F /* WaterSpriteNode.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD445481AC69FDF0039FD1F /* WaterSpriteNode.swift */; };
 		FCD58C051AD8BE79000D8AA3 /* StartGameScene.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD58C041AD8BE79000D8AA3 /* StartGameScene.swift */; };
 		FCD58C071AD8BE8B000D8AA3 /* EndGameScene.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD58C061AD8BE8B000D8AA3 /* EndGameScene.swift */; };
+		FCE9F0971B8D3BE600D779E6 /* LogHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCE9F0961B8D3BE600D779E6 /* LogHelper.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -55,9 +61,17 @@
 		FC39305B1B82AE5F005C5733 /* MCManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MCManager.swift; sourceTree = "<group>"; };
 		FC422FC71B06F8A900623336 /* AnimalPicSpriteNode.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AnimalPicSpriteNode.swift; sourceTree = "<group>"; };
 		FC422FD11B0D4BA500623336 /* GameKitHelper.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = GameKitHelper.swift; sourceTree = "<group>"; };
+		FCD05F821B8D38D600B09C7A /* Color.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Color.swift; sourceTree = "<group>"; };
+		FCD05F841B8D38D600B09C7A /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		FCD05F851B8D38D600B09C7A /* Loggerithm.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Loggerithm.h; sourceTree = "<group>"; };
+		FCD05F861B8D38D600B09C7A /* Loggerithm.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Loggerithm.swift; sourceTree = "<group>"; };
+		FCD05F881B8D38D600B09C7A /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		FCD05F891B8D38D600B09C7A /* Loggerithm.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Loggerithm.h; sourceTree = "<group>"; };
+		FCD05F8A1B8D38D600B09C7A /* Type.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Type.swift; sourceTree = "<group>"; };
 		FCD445481AC69FDF0039FD1F /* WaterSpriteNode.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = WaterSpriteNode.swift; sourceTree = "<group>"; };
 		FCD58C041AD8BE79000D8AA3 /* StartGameScene.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = StartGameScene.swift; sourceTree = "<group>"; };
 		FCD58C061AD8BE8B000D8AA3 /* EndGameScene.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = EndGameScene.swift; sourceTree = "<group>"; };
+		FCE9F0961B8D3BE600D779E6 /* LogHelper.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = LogHelper.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -99,23 +113,25 @@
 		FC20C4C41ABD7E66004BF303 /* animalsFighting */ = {
 			isa = PBXGroup;
 			children = (
-				FC20C4C71ABD7E66004BF303 /* AppDelegate.swift */,
+				FCD05F811B8D38D600B09C7A /* Loggerithm */,
 				FC20C4C91ABD7E66004BF303 /* GameScene.sks */,
+				FC422FC71B06F8A900623336 /* AnimalPicSpriteNode.swift */,
+				FC20C4EB1ABDB3B4004BF303 /* AnimalSpriteNode.swift */,
+				FC20C4C71ABD7E66004BF303 /* AppDelegate.swift */,
+				FCD58C061AD8BE8B000D8AA3 /* EndGameScene.swift */,
+				FC422FD11B0D4BA500623336 /* GameKitHelper.swift */,
 				FC20C4CB1ABD7E66004BF303 /* GameScene.swift */,
 				FC20C4CD1ABD7E66004BF303 /* GameViewController.swift */,
-				FC20C4CF1ABD7E66004BF303 /* Main.storyboard */,
+				FC39305B1B82AE5F005C5733 /* MCManager.swift */,
+				FC3930291B78277C005C5733 /* Message.swift */,
+				FC16415A1B5349F600E81502 /* MultiplayerNetworking.swift */,
+				FCD58C041AD8BE79000D8AA3 /* StartGameScene.swift */,
+				FCD445481AC69FDF0039FD1F /* WaterSpriteNode.swift */,
 				FC20C4D21ABD7E66004BF303 /* Images.xcassets */,
 				FC20C4D41ABD7E66004BF303 /* LaunchScreen.xib */,
+				FC20C4CF1ABD7E66004BF303 /* Main.storyboard */,
 				FC20C4C51ABD7E66004BF303 /* Supporting Files */,
-				FC20C4EB1ABDB3B4004BF303 /* AnimalSpriteNode.swift */,
-				FCD445481AC69FDF0039FD1F /* WaterSpriteNode.swift */,
-				FCD58C041AD8BE79000D8AA3 /* StartGameScene.swift */,
-				FCD58C061AD8BE8B000D8AA3 /* EndGameScene.swift */,
-				FC422FC71B06F8A900623336 /* AnimalPicSpriteNode.swift */,
-				FC422FD11B0D4BA500623336 /* GameKitHelper.swift */,
-				FC16415A1B5349F600E81502 /* MultiplayerNetworking.swift */,
-				FC3930291B78277C005C5733 /* Message.swift */,
-				FC39305B1B82AE5F005C5733 /* MCManager.swift */,
+				FCE9F0961B8D3BE600D779E6 /* LogHelper.swift */,
 			);
 			path = animalsFighting;
 			sourceTree = "<group>";
@@ -143,6 +159,37 @@
 				FC20C4E01ABD7E66004BF303 /* Info.plist */,
 			);
 			name = "Supporting Files";
+			sourceTree = "<group>";
+		};
+		FCD05F811B8D38D600B09C7A /* Loggerithm */ = {
+			isa = PBXGroup;
+			children = (
+				FCD05F821B8D38D600B09C7A /* Color.swift */,
+				FCD05F831B8D38D600B09C7A /* iOS Frameworkd Resource */,
+				FCD05F861B8D38D600B09C7A /* Loggerithm.swift */,
+				FCD05F871B8D38D600B09C7A /* OSX Frameworkd Resource */,
+				FCD05F8A1B8D38D600B09C7A /* Type.swift */,
+			);
+			name = Loggerithm;
+			path = Source;
+			sourceTree = "<group>";
+		};
+		FCD05F831B8D38D600B09C7A /* iOS Frameworkd Resource */ = {
+			isa = PBXGroup;
+			children = (
+				FCD05F841B8D38D600B09C7A /* Info.plist */,
+				FCD05F851B8D38D600B09C7A /* Loggerithm.h */,
+			);
+			path = "iOS Frameworkd Resource";
+			sourceTree = "<group>";
+		};
+		FCD05F871B8D38D600B09C7A /* OSX Frameworkd Resource */ = {
+			isa = PBXGroup;
+			children = (
+				FCD05F881B8D38D600B09C7A /* Info.plist */,
+				FCD05F891B8D38D600B09C7A /* Loggerithm.h */,
+			);
+			path = "OSX Frameworkd Resource";
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -228,7 +275,9 @@
 			files = (
 				FC20C4D61ABD7E66004BF303 /* LaunchScreen.xib in Resources */,
 				FC20C4D31ABD7E66004BF303 /* Images.xcassets in Resources */,
+				FCD05F8E1B8D38D600B09C7A /* Info.plist in Resources */,
 				FC20C4CA1ABD7E66004BF303 /* GameScene.sks in Resources */,
+				FCD05F8C1B8D38D600B09C7A /* Info.plist in Resources */,
 				FC20C4D11ABD7E66004BF303 /* Main.storyboard in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -251,11 +300,15 @@
 				FCD58C051AD8BE79000D8AA3 /* StartGameScene.swift in Sources */,
 				FCD58C071AD8BE8B000D8AA3 /* EndGameScene.swift in Sources */,
 				FC20C4EC1ABDB3B4004BF303 /* AnimalSpriteNode.swift in Sources */,
+				FCD05F8B1B8D38D600B09C7A /* Color.swift in Sources */,
+				FCD05F8F1B8D38D600B09C7A /* Type.swift in Sources */,
 				FC422FD21B0D4BA500623336 /* GameKitHelper.swift in Sources */,
 				FC39305C1B82AE5F005C5733 /* MCManager.swift in Sources */,
 				FC20C4CC1ABD7E66004BF303 /* GameScene.swift in Sources */,
 				FC39302A1B78277C005C5733 /* Message.swift in Sources */,
+				FCD05F8D1B8D38D600B09C7A /* Loggerithm.swift in Sources */,
 				FC20C4CE1ABD7E66004BF303 /* GameViewController.swift in Sources */,
+				FCE9F0971B8D3BE600D779E6 /* LogHelper.swift in Sources */,
 				FC20C4C81ABD7E66004BF303 /* AppDelegate.swift in Sources */,
 				FC16415B1B5349F600E81502 /* MultiplayerNetworking.swift in Sources */,
 				FC422FC81B06F8A900623336 /* AnimalPicSpriteNode.swift in Sources */,
@@ -388,9 +441,10 @@
 				INFOPLIST_FILE = animalsFighting/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 7.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
+				OTHER_SWIFT_FLAGS = "-D DEBUG";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE = "";
-				TARGETED_DEVICE_FAMILY = "1,2";
+				TARGETED_DEVICE_FAMILY = 1;
 			};
 			name = Debug;
 		};
@@ -403,9 +457,10 @@
 				INFOPLIST_FILE = animalsFighting/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 7.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
+				OTHER_SWIFT_FLAGS = "-D DEBUG";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE = "";
-				TARGETED_DEVICE_FAMILY = "1,2";
+				TARGETED_DEVICE_FAMILY = 1;
 			};
 			name = Release;
 		};

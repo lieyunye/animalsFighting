@@ -16,7 +16,7 @@ protocol MCManagerDelegate {
     
 }
 
-class MCManager: NSObject,MCNearbyServiceBrowserDelegate,MCNearbyServiceAdvertiserDelegate {
+class MCManager: NSObject {
     
     private let mcServiceType = "lieyunye-af"
     private let myPeerId = MCPeerID(displayName: UIDevice.currentDevice().name)
@@ -46,6 +46,7 @@ class MCManager: NSObject,MCNearbyServiceBrowserDelegate,MCNearbyServiceAdvertis
         }()
     
     func sendData(message:Message) {
+        NSLog("sendData+++++++++++++++++++++")
         var data = NSKeyedArchiver.archivedDataWithRootObject(message)
         if session.connectedPeers.count > 0 {
             var error : NSError?
@@ -94,15 +95,13 @@ extension MCSessionState {
 
 extension MCManager : MCSessionDelegate {
     func session(session: MCSession!, peer peerID: MCPeerID!, didChangeState state: MCSessionState) {
-        NSLog("%@", "peer \(peerID) didChangeState: \(state.stringValue())")
+        NSLog("%@", "peer \(peerID.displayName) didChangeState: \(state.stringValue())")
 //        self.delegate?.connectedDevicesChanged(self, connectedDevices: session.connectedPeers.map({$0.displayName}))
     }
     
     func session(session: MCSession!, didReceiveData data: NSData!, fromPeer peerID: MCPeerID!) {
         NSLog("%@", "didReceiveData: \(data)")
-//        let str = NSString(data: data, encoding: NSUTF8StringEncoding) as! String
         var message : Message = NSKeyedUnarchiver.unarchiveObjectWithData(data) as! Message
-
         self.delegate?.didRecivedData(self, message: message)
     }
     
