@@ -21,6 +21,7 @@ class AnimalSpriteNode: SKSpriteNode {
     var delegate:AnimalSpriteNodeDelegate!
     var backgroud:SKSpriteNode!
     var foregroud:AnimalPicSpriteNode!
+    var animalname:String?
     
     init(texture: SKTexture!, size: CGSize){
         super.init(texture: nil, color: nil, size: size)

@@ -9,6 +9,13 @@
 import Foundation
 import GameKit
 
+enum ConnectState : String {
+    case ConnectStateConnecting = "ConnectStateConnecting"
+    case ConnectStateConnected = "ConnectStateConnected"
+    case ConnectStateNotConnected = "ConnectStateNotConnected"
+    case ConnectStateUnkown = "ConnectStateUnkown"
+}
+
 enum MessageType : Int {
     case MessageTypeGameBegin
     case MessageTypeGameOver

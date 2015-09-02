@@ -31,11 +31,27 @@ class StartGameScene: SKScene, MultiplayerNetworkingDelegate, MCManagerDelegate,
     
     var isConnected : Bool = false
     
+    var indicator:UIActivityIndicatorView?
+    
+    let connectStateLabel = SKLabelNode(fontNamed:"Chalkduster")
+
     override func didMoveToView(view: SKView) {
         
-        mcManager = MCManager()
+        mcManager = MCManager.sharedInstance
         mcManager!.delegate = self
         
+        
+        connectStateLabel.fontSize = 25;
+        connectStateLabel.fontColor = SKColor.whiteColor()
+        connectStateLabel.horizontalAlignmentMode = SKLabelHorizontalAlignmentMode.Center
+        connectStateLabel.verticalAlignmentMode = SKLabelVerticalAlignmentMode.Center
+        connectStateLabel.position = CGPoint(x:CGRectGetMidX(self.frame), y:CGRectGetMidY(self.frame));
+        
+        indicator = UIActivityIndicatorView(activityIndicatorStyle: UIActivityIndicatorViewStyle.White)
+        indicator?.center = self.view!.center
+        self.view?.addSubview(indicator!)
+        self.view?.bringSubviewToFront(indicator!)
+
         var tap2Create:SKSpriteNode = SKSpriteNode(imageNamed: TAPSTRING.TapToCreate.rawValue)
         tap2Create.name = TAPSTRING.TapToCreate.rawValue
         self.addChild(tap2Create)
@@ -135,8 +151,36 @@ class StartGameScene: SKScene, MultiplayerNetworkingDelegate, MCManagerDelegate,
 
 //MARK: - MCManagerDelegate
 extension StartGameScene : MCManagerDelegate {
-    func connectedDevicesChanged(manager: MCManager, connectedDevices: [String]) {
-        
+    func connectedStateChanged(connectedState: String) {
+        switch connectedState {
+        case ConnectState.ConnectStateConnecting.rawValue:
+            showTips("连接中...")
+            indicator?.startAnimating()
+            break
+        case ConnectState.ConnectStateConnected.rawValue:
+            showTips("连接成功")
+            indicator?.stopAnimating()
+            
+            break
+        case ConnectState.ConnectStateNotConnected.rawValue:
+            showTips("未连接")
+            indicator?.stopAnimating()
+            break
+        default:
+            showTips("未知错误")
+            indicator?.stopAnimating()
+        }
+    }
+    
+    func showTips(string:String){
+        connectStateLabel.removeFromParent()
+        self.removeAllActions()
+        connectStateLabel.text = string;
+        self.addChild(connectStateLabel)
+        var action:SKAction = SKAction.waitForDuration(1)
+        self.runAction(action, completion: { () -> Void in
+            self.connectStateLabel.removeFromParent()
+        })
     }
     
     func didRecivedData(manager: MCManager, message: Message) {

@@ -11,7 +11,7 @@ import MultipeerConnectivity
 
 protocol MCManagerDelegate {
     
-    func connectedDevicesChanged(manager : MCManager, connectedDevices: [String])
+    func connectedStateChanged(connectedState:String)
     func didRecivedData(manager : MCManager, message: Message)
     
 }
@@ -23,6 +23,8 @@ class MCManager: NSObject {
     private let serviceAdvertiser : MCNearbyServiceAdvertiser
     private let serviceBrowser : MCNearbyServiceBrowser
     var delegate : MCManagerDelegate?
+    
+    var connectState:ConnectState = ConnectState.ConnectStateUnkown
     
     override init() {
         self.serviceAdvertiser = MCNearbyServiceAdvertiser(peer: myPeerId, discoveryInfo: nil, serviceType: mcServiceType)
@@ -37,6 +39,13 @@ class MCManager: NSObject {
     deinit {
         self.serviceAdvertiser.stopAdvertisingPeer()
         self.serviceBrowser.stopBrowsingForPeers()
+    }
+    
+    class var sharedInstance : MCManager {
+        struct Static {
+            static let instance : MCManager = MCManager()
+        }
+        return Static.instance
     }
     
     lazy var session : MCSession = {
@@ -75,6 +84,7 @@ extension MCManager : MCNearbyServiceBrowserDelegate {
     func browser(browser: MCNearbyServiceBrowser!, foundPeer peerID: MCPeerID!, withDiscoveryInfo info: [NSObject : AnyObject]!) {
         println("foundPeer:\(peerID)")
         println("invitePerr:\(peerID)")
+        println("withDiscoveryInfo:\(info)")
         browser.invitePeer(peerID, toSession: self.session, withContext: nil, timeout: 10)
     }
     func browser(browser: MCNearbyServiceBrowser!, lostPeer peerID: MCPeerID!) {
@@ -85,10 +95,10 @@ extension MCManager : MCNearbyServiceBrowserDelegate {
 extension MCSessionState {
     func stringValue() -> String {
         switch (self) {
-        case .NotConnected:return "NotConnected"
-        case .Connecting:return "Connecting"
-        case .Connected:return "Connected"
-        default:return "Unkown"
+        case .NotConnected:return ConnectState.ConnectStateNotConnected.rawValue
+        case .Connecting:return ConnectState.ConnectStateConnecting.rawValue
+        case .Connected:return ConnectState.ConnectStateConnected.rawValue
+        default:return ConnectState.ConnectStateUnkown.rawValue
         }
     }
 }
@@ -96,7 +106,24 @@ extension MCSessionState {
 extension MCManager : MCSessionDelegate {
     func session(session: MCSession!, peer peerID: MCPeerID!, didChangeState state: MCSessionState) {
         NSLog("%@", "peer \(peerID.displayName) didChangeState: \(state.stringValue())")
-//        self.delegate?.connectedDevicesChanged(self, connectedDevices: session.connectedPeers.map({$0.displayName}))
+        func connectedStateChanged(connectedState: String) {
+            switch connectedState {
+            case ConnectState.ConnectStateConnecting.rawValue:
+                connectState = ConnectState.ConnectStateConnecting
+                break
+            case ConnectState.ConnectStateConnected.rawValue:
+                connectState = ConnectState.ConnectStateConnected
+                break
+            case ConnectState.ConnectStateNotConnected.rawValue:
+                connectState = ConnectState.ConnectStateNotConnected
+                break
+            default:
+                connectState = ConnectState.ConnectStateUnkown
+            }
+        }
+        dispatch_async(dispatch_get_main_queue(), { () -> Void in
+            self.delegate?.connectedStateChanged(state.stringValue())
+        })
     }
     
     func session(session: MCSession!, didReceiveData data: NSData!, fromPeer peerID: MCPeerID!) {
@@ -115,5 +142,8 @@ extension MCManager : MCSessionDelegate {
     
     func session(session: MCSession!, didStartReceivingResourceWithName resourceName: String!, fromPeer peerID: MCPeerID!, withProgress progress: NSProgress!) {
         NSLog("%@", "didStartReceivingResourceWithName")
+    }
+    func session(session: MCSession!, didReceiveCertificate certificate: [AnyObject]!, fromPeer peerID: MCPeerID!, certificateHandler: ((Bool) -> Void)!) {
+        certificateHandler(true)
     }
 }

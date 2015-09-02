@@ -16,6 +16,11 @@ struct PhysicsCategory {
     static let blueAnimal     : UInt32 = 0x10
 }
 
+enum CampSignType : String {
+    case CampSignTypeRed = "CampSignTypeRed"
+    case CampSignTypeBlue = "CampSignTypeBlue"
+}
+
 let blank:CGFloat = 0.0
 let typeName:String = "animal"
 
@@ -90,42 +95,57 @@ class GameScene: SKScene, SKPhysicsContactDelegate
     
     override func touchesBegan(touches: Set<NSObject>, withEvent event: UIEvent) {
         println("GameScene touchesBegan")
-
-        gameStarted = true
-        for touch: AnyObject in touches {
-            if touch.tapCount == 1{
-                let location = touch.locationInNode(self)
-                selectNodeForTouch(location)
-                colorizeChoosenSpriteNodeWithColor(SKColor(red: 0.26, green: 0.69, blue: 0.78, alpha: 1), touchLocation: location)
-            }else {
-                println("只支持单击")
+        
+        if MCManager.sharedInstance.connectState == ConnectState.ConnectStateConnected {
+            gameStarted = true
+            for touch: AnyObject in touches {
+                if touch.tapCount == 1{
+                    let location = touch.locationInNode(self)
+                    selectNodeForTouch(location)
+                    colorizeChoosenSpriteNodeWithColor(SKColor(red: 0.26, green: 0.69, blue: 0.78, alpha: 1), touchLocation: location)
+                }else {
+                    println("只支持单击")
+                }
             }
+        }else {
+            LogHelper.sharedInstance.log.warning("网络未连接")
         }
     }
     
     override func touchesCancelled(touches: Set<NSObject>!, withEvent event: UIEvent!) {
-        for touch: AnyObject in touches {
-            let location = touch.locationInNode(self)
-            colorizeChoosenSpriteNodeWithColor(SKColor.clearColor(), touchLocation: location)
+        if MCManager.sharedInstance.connectState == ConnectState.ConnectStateConnected {
+            for touch: AnyObject in touches {
+                let location = touch.locationInNode(self)
+                colorizeChoosenSpriteNodeWithColor(SKColor.clearColor(), touchLocation: location)
+            }
+        }else {
+            LogHelper.sharedInstance.log.warning("网络未连接")
         }
     }
 
     override func touchesEnded(touches: Set<NSObject>, withEvent event: UIEvent) {
-        for touch: AnyObject in touches {
-            let location = touch.locationInNode(self)
-            colorizeChoosenSpriteNodeWithColor(SKColor.clearColor(), touchLocation: location)
+        if MCManager.sharedInstance.connectState == ConnectState.ConnectStateConnected {
+            for touch: AnyObject in touches {
+                let location = touch.locationInNode(self)
+                colorizeChoosenSpriteNodeWithColor(SKColor.clearColor(), touchLocation: location)
+            }
+        }else {
+            LogHelper.sharedInstance.log.warning("网络未连接")
         }
     }
-    
 }
 
 extension GameScene : AnimalSpriteNodeDelegate {
     // MARK: - AnimalSpriteNodeDelegate
     
     func didTapOnSpriteNode(animalSpriteNode: AnimalSpriteNode){
-        cancleSelectedSprite()
-        animalSpriteNode.flip()
-        self.gameSceneDelegate?.didTapOnSpriteNode(animalSpriteNode.position)
+        if MCManager.sharedInstance.connectState == ConnectState.ConnectStateConnected {
+            cancleSelectedSprite()
+            animalSpriteNode.flip()
+            self.gameSceneDelegate?.didTapOnSpriteNode(animalSpriteNode.position)
+        }else {
+            LogHelper.sharedInstance.log.warning("网络未连接")
+        }
     }
     
     func didRecievedFilpPosition(position:CGPoint){
@@ -174,7 +194,7 @@ extension GameScene {
                 redAnimalSprite.physicsBody?.dynamic = true
                 redAnimalSprite.physicsBody?.affectedByGravity = false
                 redAnimalSprite.name = typeName
-                
+                redAnimalSprite.animalname = animalsName[col] + "-" + CampSignType.CampSignTypeRed.rawValue + "-" + "\(row)"
                 var x:CGFloat = CGFloat(col)*animalSize.width + animalSize.width/2.0
                 var y:CGFloat = CGFloat(row)*(animalSize.height + blank) + animalSize.height/2.0
                 self.addChild(redAnimalSprite)
@@ -193,7 +213,8 @@ extension GameScene {
                 blueAnimalSprite.physicsBody?.dynamic = true
                 blueAnimalSprite.physicsBody?.affectedByGravity = false
                 blueAnimalSprite.name = typeName
-                
+                blueAnimalSprite.animalname = animalsName[col] + "-" + CampSignType.CampSignTypeBlue.rawValue + "-" + "\(row)"
+
                 var x:CGFloat = CGFloat(col)*animalSize.width + animalSize.width/2.0
                 var y:CGFloat = (self.frame.size.height - (CGFloat(row)*(animalSize.height + blank) + animalSize.height/2.0))
                 self.addChild(blueAnimalSprite)
