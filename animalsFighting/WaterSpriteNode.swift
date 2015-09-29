@@ -19,6 +19,8 @@ class WaterSpriteNode: SKSpriteNode {
     }
     
     init(texture: SKTexture!, size: CGSize) {
-        super.init(texture: texture, color: nil,size: size)
+//        super.init(texture: texture, color: nil,size: size)
+        super.init(texture: texture, color: UIColor.clearColor(), size: size)
+        
     }
 }

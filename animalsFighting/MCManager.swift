@@ -50,16 +50,19 @@ class MCManager: NSObject {
     
     lazy var session : MCSession = {
         let session = MCSession(peer: self.myPeerId, securityIdentity: nil, encryptionPreference: MCEncryptionPreference.Required)
-        session?.delegate = self
+        session.delegate = self
         return session
         }()
     
     func sendData(message:Message) {
-        NSLog("sendData+++++++++++++++++++++")
-        var data = NSKeyedArchiver.archivedDataWithRootObject(message)
+        let data = NSKeyedArchiver.archivedDataWithRootObject(message)
+        NSLog("sendData+++++++++++++++++++++\(data)")
         if session.connectedPeers.count > 0 {
             var error : NSError?
-            if !self.session.sendData(data, toPeers: session.connectedPeers, withMode: MCSessionSendDataMode.Reliable, error: &error) {
+            do {
+                try self.session.sendData(data, toPeers: session.connectedPeers, withMode: MCSessionSendDataMode.Reliable)
+            } catch let error1 as NSError {
+                error = error1
                 NSLog("%@", "\(error)")
             }
         }
@@ -68,27 +71,27 @@ class MCManager: NSObject {
 }
 
 extension MCManager : MCNearbyServiceAdvertiserDelegate {
-    func advertiser(advertiser: MCNearbyServiceAdvertiser!, didNotStartAdvertisingPeer error: NSError!) {
-        println("didNotStartAdvertisingPeer:\(error.description)")
+    func advertiser(advertiser: MCNearbyServiceAdvertiser, didNotStartAdvertisingPeer error: NSError) {
+        print("didNotStartAdvertisingPeer:\(error.description)")
     }
-    func advertiser(advertiser: MCNearbyServiceAdvertiser!, didReceiveInvitationFromPeer peerID: MCPeerID!, withContext context: NSData!, invitationHandler: ((Bool, MCSession!) -> Void)!) {
-        println("didReceiveInvitationFromPeer:\(peerID)")
+    func advertiser(advertiser: MCNearbyServiceAdvertiser, didReceiveInvitationFromPeer peerID: MCPeerID, withContext context: NSData?, invitationHandler: ((Bool, MCSession) -> Void)) {
+        print("didReceiveInvitationFromPeer:\(peerID)")
         invitationHandler(true, self.session)
     }
 }
 
 extension MCManager : MCNearbyServiceBrowserDelegate {
-    func browser(browser: MCNearbyServiceBrowser!, didNotStartBrowsingForPeers error: NSError!) {
-        println("didNotStartBrowsingForPeers:\(error.description)")
+    func browser(browser: MCNearbyServiceBrowser, didNotStartBrowsingForPeers error: NSError) {
+        print("didNotStartBrowsingForPeers:\(error.description)")
     }
-    func browser(browser: MCNearbyServiceBrowser!, foundPeer peerID: MCPeerID!, withDiscoveryInfo info: [NSObject : AnyObject]!) {
-        println("foundPeer:\(peerID)")
-        println("invitePerr:\(peerID)")
-        println("withDiscoveryInfo:\(info)")
+    func browser(browser: MCNearbyServiceBrowser, foundPeer peerID: MCPeerID, withDiscoveryInfo info: [String : String]?) {
+        print("foundPeer:\(peerID)")
+        print("invitePerr:\(peerID)")
+        print("withDiscoveryInfo:\(info)")
         browser.invitePeer(peerID, toSession: self.session, withContext: nil, timeout: 10)
     }
-    func browser(browser: MCNearbyServiceBrowser!, lostPeer peerID: MCPeerID!) {
-        println("lostPeer;\(peerID)")
+    func browser(browser: MCNearbyServiceBrowser, lostPeer peerID: MCPeerID) {
+        print("lostPeer;\(peerID)")
     }
 }
 
@@ -104,10 +107,9 @@ extension MCSessionState {
 }
 
 extension MCManager : MCSessionDelegate {
-    func session(session: MCSession!, peer peerID: MCPeerID!, didChangeState state: MCSessionState) {
+    func session(session: MCSession, peer peerID: MCPeerID, didChangeState state: MCSessionState) {
         NSLog("%@", "peer \(peerID.displayName) didChangeState: \(state.stringValue())")
-        func connectedStateChanged(connectedState: String) {
-            switch connectedState {
+            switch state.stringValue() {
             case ConnectState.ConnectStateConnecting.rawValue:
                 connectState = ConnectState.ConnectStateConnecting
                 break
@@ -120,30 +122,29 @@ extension MCManager : MCSessionDelegate {
             default:
                 connectState = ConnectState.ConnectStateUnkown
             }
-        }
         dispatch_async(dispatch_get_main_queue(), { () -> Void in
             self.delegate?.connectedStateChanged(state.stringValue())
         })
     }
     
-    func session(session: MCSession!, didReceiveData data: NSData!, fromPeer peerID: MCPeerID!) {
+    func session(session: MCSession, didReceiveData data: NSData, fromPeer peerID: MCPeerID) {
         NSLog("%@", "didReceiveData: \(data)")
-        var message : Message = NSKeyedUnarchiver.unarchiveObjectWithData(data) as! Message
+        let message : Message = NSKeyedUnarchiver.unarchiveObjectWithData(data) as! Message
         self.delegate?.didRecivedData(self, message: message)
     }
     
-    func session(session: MCSession!, didReceiveStream stream: NSInputStream!, withName streamName: String!, fromPeer peerID: MCPeerID!) {
+    func session(session: MCSession, didReceiveStream stream: NSInputStream, withName streamName: String, fromPeer peerID: MCPeerID) {
         NSLog("%@", "didReceiveStream")
     }
     
-    func session(session: MCSession!, didFinishReceivingResourceWithName resourceName: String!, fromPeer peerID: MCPeerID!, atURL localURL: NSURL!, withError error: NSError!) {
+    func session(session: MCSession, didFinishReceivingResourceWithName resourceName: String, fromPeer peerID: MCPeerID, atURL localURL: NSURL, withError error: NSError?) {
         NSLog("%@", "didFinishReceivingResourceWithName")
     }
     
-    func session(session: MCSession!, didStartReceivingResourceWithName resourceName: String!, fromPeer peerID: MCPeerID!, withProgress progress: NSProgress!) {
+    func session(session: MCSession, didStartReceivingResourceWithName resourceName: String, fromPeer peerID: MCPeerID, withProgress progress: NSProgress) {
         NSLog("%@", "didStartReceivingResourceWithName")
     }
-    func session(session: MCSession!, didReceiveCertificate certificate: [AnyObject]!, fromPeer peerID: MCPeerID!, certificateHandler: ((Bool) -> Void)!) {
+    func session(session: MCSession, didReceiveCertificate certificate: [AnyObject]?, fromPeer peerID: MCPeerID, certificateHandler: ((Bool) -> Void)) {
         certificateHandler(true)
     }
 }

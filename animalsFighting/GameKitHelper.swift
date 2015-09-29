@@ -41,7 +41,7 @@ class GameKitHelper:NSObject,GKMatchmakerViewControllerDelegate, GKMatchDelegate
         willSet{
             if newValue != nil {
                 self.lastError = newValue
-                print("GameKitHelper ERROR: \(self.lastError.userInfo?.description)")
+                print("GameKitHelper ERROR: \(self.lastError.userInfo.description)", terminator: "")
             }
         }
     }
@@ -56,13 +56,13 @@ class GameKitHelper:NSObject,GKMatchmakerViewControllerDelegate, GKMatchDelegate
     }
     
     func authenticateLocalPlayer(){
-        var localPlayer:GKLocalPlayer = GKLocalPlayer.localPlayer()
+        let localPlayer:GKLocalPlayer = GKLocalPlayer.localPlayer()
         
         if(localPlayer.authenticated){
             NSNotificationCenter.defaultCenter().postNotificationName(LocalPlayerIsAuthenticated, object: nil)
         }
         
-        localPlayer.authenticateHandler = {(viewController:UIViewController!, error:NSError!) -> Void in
+        localPlayer.authenticateHandler = {(viewController:UIViewController?, error:NSError?) -> Void in
             //3
             self.lastError = error
             
@@ -82,18 +82,18 @@ class GameKitHelper:NSObject,GKMatchmakerViewControllerDelegate, GKMatchDelegate
     }
     
     func lookupPlayers(){
-        print("Looking up \(match.playerIDs.count)")
+        print("Looking up \(match.playerIDs.count)", terminator: "")
         GKPlayer.loadPlayersForIdentifiers(match.playerIDs, withCompletionHandler: { (players, error) -> Void in
             if error != nil {
-                print("Error retrieving player info:\(error.localizedDescription)")
+                print("Error retrieving player info:\(error!.localizedDescription)", terminator: "")
                 self._matchStarted = false
                 self.delegate.matchEnded()
             }else {
                 self.playersDict = Dictionary<String,GKPlayer>()
-                for player in players {
-                    self.playersDict[player.playerID]=player as? GKPlayer
+                for player in players! {
+                    self.playersDict[player.playerID!]=player as? GKPlayer
                 }
-                self.playersDict[GKLocalPlayer.localPlayer().playerID] = GKLocalPlayer.localPlayer()
+                self.playersDict[GKLocalPlayer.localPlayer().playerID!] = GKLocalPlayer.localPlayer()
                 self._matchStarted = true;
                 self.delegate.matchStarted()
             }
@@ -111,11 +111,11 @@ class GameKitHelper:NSObject,GKMatchmakerViewControllerDelegate, GKMatchDelegate
         self.delegate = _multiplayerNetworking
         
         viewController.dismissViewControllerAnimated(false, completion: nil);
-        var request:GKMatchRequest = GKMatchRequest()
+        let request:GKMatchRequest = GKMatchRequest()
         request.minPlayers = minPlayers
         request.maxPlayers = maxPlayers
         
-        var mmvc:GKMatchmakerViewController = GKMatchmakerViewController(matchRequest: request)
+        let mmvc:GKMatchmakerViewController = GKMatchmakerViewController(matchRequest: request)!
         mmvc.matchmakerDelegate = self
         viewController.presentViewController(mmvc, animated: true, completion: nil)
     }
@@ -123,17 +123,17 @@ class GameKitHelper:NSObject,GKMatchmakerViewControllerDelegate, GKMatchDelegate
     
     // MARK: - GKMatchmakerViewControllerDelegate
     
-    func matchmakerViewControllerWasCancelled(viewController: GKMatchmakerViewController!){
+    func matchmakerViewControllerWasCancelled(viewController: GKMatchmakerViewController){
         viewController.dismissViewControllerAnimated(true, completion: nil)
     }
     
-    func matchmakerViewController(viewController: GKMatchmakerViewController!, didFailWithError error: NSError!){
+    func matchmakerViewController(viewController: GKMatchmakerViewController, didFailWithError error: NSError){
         viewController.dismissViewControllerAnimated(true, completion: nil)
-        print("Error finding match: \(error.localizedDescription)")
+        print("Error finding match: \(error.localizedDescription)", terminator: "")
     }
     
     // A peer-to-peer match has been found, the game should start
-    func matchmakerViewController(viewController: GKMatchmakerViewController!, didFindMatch match: GKMatch!){
+    func matchmakerViewController(viewController: GKMatchmakerViewController, didFindMatch match: GKMatch){
         viewController.dismissViewControllerAnimated(true, completion: nil)
         self.match = match
         match.delegate = self
@@ -144,41 +144,41 @@ class GameKitHelper:NSObject,GKMatchmakerViewControllerDelegate, GKMatchDelegate
     
     // MARK: - GKMatchDelegate
     
-    func match(match: GKMatch!, didReceiveData data: NSData!, fromPlayer playerID: String!){
+    func match(match: GKMatch, didReceiveData data: NSData, fromPlayer playerID: String){
         if (self.match != match) {
           return
         }
         self.delegate.matchDidReceiveDataFromPlayer(match, data: data, playerID: playerID)
     }
 
-    func match(match: GKMatch!, player playerID: String!, didChangeState state: GKPlayerConnectionState){
+    func match(match: GKMatch, player playerID: String, didChangeState state: GKPlayerConnectionState){
         if (self.match != match) {
             return
         }
         
         switch state {
         case .StateUnknown:
-            println("StateUnknown")
+            print("StateUnknown")
         case .StateConnected:
-            println("StateConnected")
+            print("StateConnected")
             if !_matchStarted && match.expectedPlayerCount == 0{
                 lookupPlayers()
             }
 
         case .StateDisconnected:
-            println("StateDisconnected")
+            print("StateDisconnected")
             _matchStarted = false
             delegate.matchEnded()
         
         }
     }
     
-    func match(match: GKMatch!, didFailWithError error: NSError!)
+    func match(match: GKMatch, didFailWithError error: NSError?)
     {
         if (self.match != match) {
             return
         }
-        println("Match failed with error:\(error.localizedDescription)")
+        print("Match failed with error:\(error!.localizedDescription)")
         _matchStarted = false
         delegate.matchEnded()
         

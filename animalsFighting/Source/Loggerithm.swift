@@ -104,9 +104,9 @@ public struct Loggerithm {
     /// NSDateFromatter used internally.
     private let dateFormatter = NSDateFormatter()
     
-    /// LogFunction used, println for DEBUG, NSLog for Production.
+    /// LogFunction used, print for DEBUG, NSLog for Production.
     #if DEBUG
-    private let LogFunction: (format: String) -> Void = println
+    private let LogFunction: (format: String) -> Void = {format in print(format)}
     private let UsingNSLog = false
     #else
     private let LogFunction: (format: String, args: CVarArgType...) -> Void = NSLog
@@ -119,7 +119,7 @@ public struct Loggerithm {
         
         // Check to see whether XcodeColors is installed and enabled
         // useColorfulLog will be turned on when environment variable "XcodeColors" == "YES"
-        if let xcodeColorsEnabled = NSProcessInfo().environment["XcodeColors"] as? String where xcodeColorsEnabled == "YES" {
+        if let xcodeColorsEnabled = NSProcessInfo().environment["XcodeColors"] as String? where xcodeColorsEnabled == "YES" {
             useColorfulLog = true
         }
     }
@@ -134,27 +134,14 @@ public struct Loggerithm {
     }
     
     /**
-    Logs a message with .Verbose level.
-    
-    :param: function Function name
-    :param: file     File name
-    :param: line     Line number
-    
-    :returns: The string logged out.
-    */
-    public func verbose(function: String = __FUNCTION__, file: String = __FILE__, line: Int = __LINE__) -> String? {
-        return verbose("", function: function, file: file,  line: line)
-    }
-    
-    /**
     Logs textual representation of `value` with .Verbose level.
     
-    :param: value    A value conforms `Streamable`, `Printable`, `DebugPrintable`.
-    :param: function Function name
-    :param: file     File name
-    :param: line     Line number
+    - parameter value:    A value conforms `Streamable`, `Printable`, `DebugPrintable`.
+    - parameter function: Function name
+    - parameter file:     File name
+    - parameter line:     Line number
     
-    :returns: The string logged out.
+    - returns: The string logged out.
     */
     public func verbose<T>(value: T, function: String = __FUNCTION__, file: String = __FILE__, line: Int = __LINE__) -> String? {
         return verbose("\(value)", function: function, file: file,  line: line)
@@ -163,43 +150,30 @@ public struct Loggerithm {
     /**
     Logs an message with formatted string and arguments list with .Verbose level.
     
-    :param: format   Formatted string
-    :param: function Function name
-    :param: file     File name
-    :param: line     Line number
-    :param: args     Arguments list
+    - parameter format:   Formatted string
+    - parameter function: Function name
+    - parameter file:     File name
+    - parameter line:     Line number
+    - parameter args:     Arguments list
     
-    :returns: The string logged out.
+    - returns: The string logged out.
     */
-    public func verbose(_ format: String = "", function: String = __FUNCTION__, file: String = __FILE__, line: Int = __LINE__, args: CVarArgType...) -> String? {
+    public func verbose(format: String, function: String = __FUNCTION__, file: String = __FILE__, line: Int = __LINE__, args: CVarArgType...) -> String? {
         if .Verbose >= logLevel {
-            return log(.Verbose, function: function, file: file,  line: line, format: format, args: getVaList(args))
+            return log(.Verbose, function: function, file: file,  line: line, format: format, args: args)
         }
         return nil
     }
     
     /**
-    Logs a message with .Debug level.
-    
-    :param: function Function name
-    :param: file     File name
-    :param: line     Line number
-    
-    :returns: The string logged out.
-    */
-    public func debug(function: String = __FUNCTION__, file: String = __FILE__, line: Int = __LINE__) -> String? {
-        return debug("", function: function, file: file,  line: line)
-    }
-    
-    /**
     Logs textual representation of `value` with .Debug level.
     
-    :param: value    A value conforms `Streamable`, `Printable`, `DebugPrintable`.
-    :param: function Function name
-    :param: file     File name
-    :param: line     Line number
+    - parameter value:    A value conforms `Streamable`, `Printable`, `DebugPrintable`.
+    - parameter function: Function name
+    - parameter file:     File name
+    - parameter line:     Line number
     
-    :returns: The string logged out.
+    - returns: The string logged out.
     */
     public func debug<T>(value: T, function: String = __FUNCTION__, file: String = __FILE__, line: Int = __LINE__) -> String? {
         return debug("\(value)", function: function, file: file,  line: line)
@@ -208,44 +182,31 @@ public struct Loggerithm {
     /**
     Logs an message with formatted string and arguments list with .Debug level.
     
-    :param: format   Formatted string
-    :param: function Function name
-    :param: file     File name
-    :param: line     Line number
-    :param: args     Arguments list
+    - parameter format:   Formatted string
+    - parameter function: Function name
+    - parameter file:     File name
+    - parameter line:     Line number
+    - parameter args:     Arguments list
     
-    :returns: The string logged out.
+    - returns: The string logged out.
     */
-    public func debug(_ format: String = "", function: String = __FUNCTION__, file: String = __FILE__, line: Int = __LINE__, args: CVarArgType...) -> String?
+    public func debug(format: String, function: String = __FUNCTION__, file: String = __FILE__, line: Int = __LINE__, args: CVarArgType...) -> String?
     {
         if .Debug >= logLevel {
-            return log(.Debug, function: function, file: file, line: line, format: format, args: getVaList(args))
+            return log(.Debug, function: function, file: file, line: line, format: format, args: args)
         }
         return nil
     }
     
     /**
-    Logs a message with .Info level.
-    
-    :param: function Function name
-    :param: file     File name
-    :param: line     Line number
-    
-    :returns: The string logged out.
-    */
-    public func info(function: String = __FUNCTION__, file: String = __FILE__, line: Int = __LINE__) -> String? {
-        return info("", function: function, file: file,  line: line)
-    }
-    
-    /**
     Logs textual representation of `value` with .Info level.
     
-    :param: value    A value conforms `Streamable`, `Printable`, `DebugPrintable`.
-    :param: function Function name
-    :param: file     File name
-    :param: line     Line number
+    - parameter value:    A value conforms `Streamable`, `Printable`, `DebugPrintable`.
+    - parameter function: Function name
+    - parameter file:     File name
+    - parameter line:     Line number
     
-    :returns: The string logged out.
+    - returns: The string logged out.
     */
     public func info<T>(value: T, function: String = __FUNCTION__, file: String = __FILE__, line: Int = __LINE__) -> String? {
         return info("\(value)", function: function, file: file,  line: line)
@@ -254,44 +215,31 @@ public struct Loggerithm {
     /**
     Logs an message with formatted string and arguments list with .Info level.
     
-    :param: format   Formatted string
-    :param: function Function name
-    :param: file     File name
-    :param: line     Line number
-    :param: args     Arguments list
+    - parameter format:   Formatted string
+    - parameter function: Function name
+    - parameter file:     File name
+    - parameter line:     Line number
+    - parameter args:     Arguments list
     
-    :returns: The string logged out.
+    - returns: The string logged out.
     */
-    public func info(_ format: String = "", function: String = __FUNCTION__, file: String = __FILE__, line: Int = __LINE__, args: CVarArgType...) -> String?
+    public func info(format: String, function: String = __FUNCTION__, file: String = __FILE__, line: Int = __LINE__, args: CVarArgType...) -> String?
     {
         if .Info >= logLevel {
-            return log(.Info, function: function, file: file, line: line, format: format, args: getVaList(args))
+            return log(.Info, function: function, file: file, line: line, format: format, args: args)
         }
         return nil
     }
     
     /**
-    Logs a message with .Warning level.
-    
-    :param: function Function name
-    :param: file     File name
-    :param: line     Line number
-    
-    :returns: The string logged out.
-    */
-    public func warning(function: String = __FUNCTION__, file: String = __FILE__, line: Int = __LINE__) -> String? {
-        return warning("", function: function, file: file,  line: line)
-    }
-    
-    /**
     Logs textual representation of `value` with .Warning level.
     
-    :param: value    A value conforms `Streamable`, `Printable`, `DebugPrintable`.
-    :param: function Function name
-    :param: file     File name
-    :param: line     Line number
+    - parameter value:    A value conforms `Streamable`, `Printable`, `DebugPrintable`.
+    - parameter function: Function name
+    - parameter file:     File name
+    - parameter line:     Line number
     
-    :returns: The string logged out.
+    - returns: The string logged out.
     */
     public func warning<T>(value: T, function: String = __FUNCTION__, file: String = __FILE__, line: Int = __LINE__) -> String? {
         return warning("\(value)", function: function, file: file,  line: line)
@@ -300,44 +248,31 @@ public struct Loggerithm {
     /**
     Logs an message with formatted string and arguments list with .Warning level.
     
-    :param: format   Formatted string
-    :param: function Function name
-    :param: file     File name
-    :param: line     Line number
-    :param: args     Arguments list
+    - parameter format:   Formatted string
+    - parameter function: Function name
+    - parameter file:     File name
+    - parameter line:     Line number
+    - parameter args:     Arguments list
     
-    :returns: The string logged out.
+    - returns: The string logged out.
     */
-    public func warning(_ format: String = "", function: String = __FUNCTION__, file: String = __FILE__, line: Int = __LINE__, args: CVarArgType...) -> String?
+    public func warning(format: String, function: String = __FUNCTION__, file: String = __FILE__, line: Int = __LINE__, args: CVarArgType...) -> String?
     {
         if .Warning >= logLevel {
-            return log(.Warning, function: function, file: file, line: line, format: format, args: getVaList(args))
+            return log(.Warning, function: function, file: file, line: line, format: format, args: args)
         }
         return nil
     }
     
     /**
-    Logs a message with .Error level.
-    
-    :param: function Function name
-    :param: file     File name
-    :param: line     Line number
-    
-    :returns: The string logged out.
-    */
-    public func error(function: String = __FUNCTION__, file: String = __FILE__, line: Int = __LINE__) -> String? {
-        return error("", function: function, file: file,  line: line)
-    }
-    
-    /**
     Logs textual representation of `value` with .Error level.
     
-    :param: value    A value conforms `Streamable`, `Printable`, `DebugPrintable`.
-    :param: function Function name
-    :param: file     File name
-    :param: line     Line number
+    - parameter value:    A value conforms `Streamable`, `Printable`, `DebugPrintable`.
+    - parameter function: Function name
+    - parameter file:     File name
+    - parameter line:     Line number
     
-    :returns: The string logged out.
+    - returns: The string logged out.
     */
     public func error<T>(value: T, function: String = __FUNCTION__, file: String = __FILE__, line: Int = __LINE__) -> String? {
         return error("\(value)", function: function, file: file,  line: line)
@@ -346,18 +281,18 @@ public struct Loggerithm {
     /**
     Logs an message with formatted string and arguments list with .Error level.
     
-    :param: format   Formatted string
-    :param: function Function name
-    :param: file     File name
-    :param: line     Line number
-    :param: args     Arguments list
+    - parameter format:   Formatted string
+    - parameter function: Function name
+    - parameter file:     File name
+    - parameter line:     Line number
+    - parameter args:     Arguments list
     
-    :returns: The string logged out.
+    - returns: The string logged out.
     */
-    public func error(_ format: String = "", function: String = __FUNCTION__, file: String = __FILE__, line: Int = __LINE__, args: CVarArgType...) -> String?
+    public func error(format: String, function: String = __FUNCTION__, file: String = __FILE__, line: Int = __LINE__, args: CVarArgType...) -> String?
     {
         if .Error >= logLevel {
-            return log(.Error, function: function, file: file, line: line, format: format, args: getVaList(args))
+            return log(.Error, function: function, file: file, line: line, format: format, args: args)
         }
         return nil
     }
@@ -365,19 +300,19 @@ public struct Loggerithm {
     /**
     Logs an message with formatted string and arguments list.
     
-    :param: level    Log level
-    :param: format   Formatted string
-    :param: function Function name
-    :param: file     File name
-    :param: line     Line number
-    :param: args     Arguments list
+    - parameter level:    Log level
+    - parameter format:   Formatted string
+    - parameter function: Function name
+    - parameter file:     File name
+    - parameter line:     Line number
+    - parameter args:     Arguments list
     
-    :returns: The string logged out.
+    - returns: The string logged out.
     */
     public func logWithLevel(level: LogLevel, _ format: String = "", function: String = __FUNCTION__, file: String = __FILE__, line: Int = __LINE__, args: CVarArgType...) -> String?
     {
         if level >= logLevel {
-            return log(level, file: file, function: function, line: line, format: format, args: getVaList(args))
+            return log(level, file: file, function: function, line: line, format: format, args: args)
         }
         return nil
     }
@@ -385,23 +320,23 @@ public struct Loggerithm {
     /**
     Construct a log message, log it out and return it.
     
-    :param: level    Log level
-    :param: function Function name
-    :param: file     File name
-    :param: line     Line number
-    :param: format   Formatted string
-    :param: args     Arguments list
+    - parameter level:    Log level
+    - parameter function: Function name
+    - parameter file:     File name
+    - parameter line:     Line number
+    - parameter format:   Formatted string
+    - parameter args:     Arguments list
     
-    :returns: The string logged out.
+    - returns: The string logged out.
     */
-    private func log(level: LogLevel, function: String = __FUNCTION__, file: String = __FILE__, line: Int = __LINE__, format: String, args: CVaListPointer) -> String
+    private func log(level: LogLevel, function: String = __FUNCTION__, file: String = __FILE__, line: Int = __LINE__, format: String, args: [CVarArgType]) -> String
     {
         let dateTime = showDateTime ? (UsingNSLog ? "" : "\(dateFormatter.stringFromDate(NSDate())) ") : ""
         let levelString = showLogLevel ? "[\(LogLevel.descritionForLogLevel(level))] " : ""
         
         var fileLine = ""
         if showFileName {
-            fileLine += "[" + file.lastPathComponent
+            fileLine += "[" + (file as NSString).lastPathComponent
             if showLineNumber {
                 fileLine += ":\(line)"
             }
@@ -410,7 +345,7 @@ public struct Loggerithm {
         
         let functionString = showFunctionName ? function : ""
         
-        let message = NSString(format: format, arguments: args) as String
+        let message = String(format: format, arguments: args)
         let infoString = "\(dateTime)\(levelString)\(fileLine)\(functionString)".stringByTrimmingCharactersInSet(NSCharacterSet(charactersInString: " "))
         
         let logString = infoString + (infoString.isEmpty ? "" : ": ") + "\(message)"

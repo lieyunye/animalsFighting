@@ -24,12 +24,12 @@ class AnimalSpriteNode: SKSpriteNode {
     var animalname:String?
     
     init(texture: SKTexture!, size: CGSize){
-        super.init(texture: nil, color: nil, size: size)
+        super.init(texture: nil, color: UIColor.clearColor(), size: size)
         animalTexture = texture;
         self.physicsBody = SKPhysicsBody(rectangleOfSize: size)
         userInteractionEnabled = true
         
-        backgroud = SKSpriteNode(color: nil, size: size)
+        backgroud = SKSpriteNode(color: UIColor.clearColor(), size: size)
         backgroud.userInteractionEnabled = false
         self.addChild(backgroud)
         
@@ -42,13 +42,13 @@ class AnimalSpriteNode: SKSpriteNode {
     }
     
 
-    override func touchesBegan(touches: Set<NSObject>, withEvent event: UIEvent) {
-        println("AnimalSpriteNode touchesBegan")
+    override func touchesBegan(touches: Set<UITouch>, withEvent event: UIEvent?) {
+        print("AnimalSpriteNode touchesBegan")
         for touch: AnyObject in touches {
             if touch.tapCount == 1{
                 delegate.didTapOnSpriteNode(self)
             }else {
-                println("只支持单击")
+                print("只支持单击")
             }
         }
     }

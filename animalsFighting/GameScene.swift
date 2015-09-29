@@ -25,7 +25,7 @@ let blank:CGFloat = 0.0
 let typeName:String = "animal"
 
 protocol GameSceneDelegate {
-    func didTapOnSpriteNode(position:CGPoint)
+    func didTapOnSpriteNode(position:CGPoint, orderMessageTapType:OrderMessageTapType)
     func didMoveItem(selectNodePosition:CGPoint, destinationPosizition:CGPoint)
 }
 
@@ -51,14 +51,19 @@ class GameScene: SKScene, SKPhysicsContactDelegate
 
     var gameSceneDelegate:GameSceneDelegate?
     
+    var sendDescArray: [OrderMessage]! = [OrderMessage]()
+    var recivedDescArray: [OrderMessage]! = [OrderMessage]()
+    
+    var campSignType:CampSignType = CampSignType.CampSignTypeRed
+    
     override func didMoveToView(view: SKView) {
         /* Setup your scene here */
         
         physicsWorld.contactDelegate = self
         self.backgroundColor = UIColor.blackColor()
         
-        let animalSize:CGSize = CGSizeMake(self.frame.size.width/8.0, self.frame.size.width/8.0)
-        let waterSpriteSize:CGSize = CGSizeMake(self.frame.size.width, self.frame.size.height - (animalSize.height * 4 + blank * 2))
+        let animalSize:CGSize = CGSizeMake(self.frame.size.width/8.0, self.frame.size.height/5.0)
+        let waterSpriteSize:CGSize = CGSizeMake(self.frame.size.width, self.frame.size.height/5.0)
         makeWaterNode(waterSpriteSize)
         makeAnimalNodes(animalSize)
         
@@ -67,15 +72,16 @@ class GameScene: SKScene, SKPhysicsContactDelegate
         }
         refreshAnimalsPostion()
         makeCampSignView()
+        setCampSignTypeIdentifier()
     }
     
     //MARK: - SKPhysicsContactDelegate
     func didBeginContact(contact: SKPhysicsContact) {
         if gameStarted == false {
-            println("game not start")
+            print("game not start")
             return
         }
-        println("Hit")
+        print("Hit")
     }
     
     override func update(currentTime: CFTimeInterval) {
@@ -85,26 +91,26 @@ class GameScene: SKScene, SKPhysicsContactDelegate
             return
         }
         if redBlood == 0 || blueBlood == 0{
-            print("redBlood \(redBlood)")
-            print("blueBlood \(blueBlood)")
+            print("redBlood \(redBlood)", terminator: "")
+            print("blueBlood \(blueBlood)", terminator: "")
             gameOver = true
             endGame()
         }
         
     }
     
-    override func touchesBegan(touches: Set<NSObject>, withEvent event: UIEvent) {
-        println("GameScene touchesBegan")
+    override func touchesBegan(touches: Set<UITouch>, withEvent event: UIEvent?) {
+        print("GameScene touchesBegan")
         
         if MCManager.sharedInstance.connectState == ConnectState.ConnectStateConnected {
             gameStarted = true
             for touch: AnyObject in touches {
                 if touch.tapCount == 1{
                     let location = touch.locationInNode(self)
-                    selectNodeForTouch(location)
+                    selectNodeForTouch(location, isFromNet: false)
                     colorizeChoosenSpriteNodeWithColor(SKColor(red: 0.26, green: 0.69, blue: 0.78, alpha: 1), touchLocation: location)
                 }else {
-                    println("只支持单击")
+                    print("只支持单击")
                 }
             }
         }else {
@@ -112,9 +118,9 @@ class GameScene: SKScene, SKPhysicsContactDelegate
         }
     }
     
-    override func touchesCancelled(touches: Set<NSObject>!, withEvent event: UIEvent!) {
+    override func touchesCancelled(touches: Set<UITouch>?, withEvent event: UIEvent?) {
         if MCManager.sharedInstance.connectState == ConnectState.ConnectStateConnected {
-            for touch: AnyObject in touches {
+            for touch: AnyObject in touches! {
                 let location = touch.locationInNode(self)
                 colorizeChoosenSpriteNodeWithColor(SKColor.clearColor(), touchLocation: location)
             }
@@ -123,7 +129,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate
         }
     }
 
-    override func touchesEnded(touches: Set<NSObject>, withEvent event: UIEvent) {
+    override func touchesEnded(touches: Set<UITouch>, withEvent event: UIEvent?) {
         if MCManager.sharedInstance.connectState == ConnectState.ConnectStateConnected {
             for touch: AnyObject in touches {
                 let location = touch.locationInNode(self)
@@ -142,17 +148,17 @@ extension GameScene : AnimalSpriteNodeDelegate {
         if MCManager.sharedInstance.connectState == ConnectState.ConnectStateConnected {
             cancleSelectedSprite()
             animalSpriteNode.flip()
-            self.gameSceneDelegate?.didTapOnSpriteNode(animalSpriteNode.position)
+            self.gameSceneDelegate?.didTapOnSpriteNode(animalSpriteNode.position, orderMessageTapType: OrderMessageTapType.OrderMessageTapType2Flip)
         }else {
             LogHelper.sharedInstance.log.warning("网络未连接")
         }
     }
     
     func didRecievedFilpPosition(position:CGPoint){
-        var animalPicSpriteNode : AnimalPicSpriteNode = self.nodeAtPoint(position) as! AnimalPicSpriteNode
-        var animalSpriteNode:AnimalSpriteNode? = (animalPicSpriteNode.parent as! AnimalSpriteNode)
+        let animalPicSpriteNode : AnimalPicSpriteNode = self.nodeAtPoint(position) as! AnimalPicSpriteNode
+        let animalSpriteNode:AnimalSpriteNode? = (animalPicSpriteNode.parent as! AnimalSpriteNode)
         if animalSpriteNode == nil {
-            println("网络传输不合法的当前node坐标")
+            print("网络传输不合法的当前node坐标")
         }else {
             cancleSelectedSprite()
             animalSpriteNode!.flip()
@@ -166,16 +172,16 @@ extension GameScene {
     func makeAnimalPositions(animalSize:CGSize){
         for row in 0..<2 {
             for col in 0..<8 {
-                var x:CGFloat = CGFloat(col)*animalSize.width + animalSize.width/2.0
-                var y:CGFloat = CGFloat(row)*(animalSize.height + blank) + animalSize.height/2.0
+                let x:CGFloat = CGFloat(col)*animalSize.width + animalSize.width/2.0
+                let y:CGFloat = CGFloat(row)*(animalSize.height + blank) + animalSize.height/2.0
                 animalPositions.append(CGPointMake(x, y))
             }
         }
         
         for row in 0..<2 {
             for col in 0..<8 {
-                var x:CGFloat = CGFloat(col)*animalSize.width + animalSize.width/2.0
-                var y:CGFloat = (self.frame.size.height - (CGFloat(row)*(animalSize.height + blank) + animalSize.height/2.0))
+                let x:CGFloat = CGFloat(col)*animalSize.width + animalSize.width/2.0
+                let y:CGFloat = (self.frame.size.height - (CGFloat(row)*(animalSize.height + blank) + animalSize.height/2.0))
                 animalPositions.append(CGPointMake(x, y))
             }
         }
@@ -184,7 +190,7 @@ extension GameScene {
     func makeAnimalNodes(animalSize:CGSize) {
         for row in 0..<2 {
             for col in 0..<8 {
-                var texture:SKTexture = SKTexture(imageNamed: animalsName[col])
+                let texture:SKTexture = SKTexture(imageNamed: animalsName[col])
                 let redAnimalSprite = AnimalSpriteNode(texture: texture,size: animalSize)
                 redAnimalSprite.delegate = self
                 redAnimalSprite.power = 7-col
@@ -195,15 +201,13 @@ extension GameScene {
                 redAnimalSprite.physicsBody?.affectedByGravity = false
                 redAnimalSprite.name = typeName
                 redAnimalSprite.animalname = animalsName[col] + "-" + CampSignType.CampSignTypeRed.rawValue + "-" + "\(row)"
-                var x:CGFloat = CGFloat(col)*animalSize.width + animalSize.width/2.0
-                var y:CGFloat = CGFloat(row)*(animalSize.height + blank) + animalSize.height/2.0
                 self.addChild(redAnimalSprite)
             }
         }
         
         for row in 0..<2 {
             for col in 0..<8 {
-                var nameString:String = animalsName[col] + "-1"
+                let nameString:String = animalsName[col] + "-1"
                 let blueAnimalSprite = AnimalSpriteNode(texture: SKTexture(imageNamed: nameString),size: animalSize)
                 blueAnimalSprite.delegate = self
                 blueAnimalSprite.power = 7-col
@@ -214,9 +218,6 @@ extension GameScene {
                 blueAnimalSprite.physicsBody?.affectedByGravity = false
                 blueAnimalSprite.name = typeName
                 blueAnimalSprite.animalname = animalsName[col] + "-" + CampSignType.CampSignTypeBlue.rawValue + "-" + "\(row)"
-
-                var x:CGFloat = CGFloat(col)*animalSize.width + animalSize.width/2.0
-                var y:CGFloat = (self.frame.size.height - (CGFloat(row)*(animalSize.height + blank) + animalSize.height/2.0))
                 self.addChild(blueAnimalSprite)
             }
         }
@@ -225,7 +226,7 @@ extension GameScene {
     
     func refreshAnimalsPostion() {
         var index:Int = 0
-        enumerateChildNodesWithName(typeName, usingBlock: { (node: SKNode!, stop: UnsafeMutablePointer <ObjCBool>) -> Void in
+        enumerateChildNodesWithName(typeName, usingBlock: { (node: SKNode, stop: UnsafeMutablePointer <ObjCBool>) -> Void in
             node.position = self.animalPositions[index]
             index++
         })
@@ -244,6 +245,21 @@ extension GameScene {
         self.addChild(campSignView)
     }
     
+    func setCampSignTypeIdentifier() {
+        let myLabel = SKLabelNode(fontNamed:"Chalkduster")
+        myLabel.fontSize = 25;
+        myLabel.fontColor = SKColor.whiteColor()
+        myLabel.horizontalAlignmentMode = SKLabelHorizontalAlignmentMode.Center
+        myLabel.verticalAlignmentMode = SKLabelVerticalAlignmentMode.Center
+        myLabel.position = CGPointMake(70, CGRectGetMidY(waterSpriteNode.frame))
+        if campSignType == CampSignType.CampSignTypeRed {
+            myLabel.text = "对方执白棋";
+        }else {
+            myLabel.text = "对方执绿棋";
+        }
+        self.addChild(myLabel)
+    }
+    
     // MARK: - Help method
     
     func degToRad(degree:CGFloat) -> CGFloat{
@@ -251,9 +267,9 @@ extension GameScene {
     }
 
     func endGame() {
-        var startGameScene:StartGameScene = StartGameScene()
+        let startGameScene:StartGameScene = StartGameScene()
         startGameScene.size = self.frame.size
-        var reveal:SKTransition = SKTransition.doorsCloseHorizontalWithDuration(1)
+        let reveal:SKTransition = SKTransition.doorsCloseHorizontalWithDuration(1)
         self.view?.presentScene(startGameScene, transition: reveal)
     }
     
@@ -266,7 +282,7 @@ extension GameScene {
         myLabel.verticalAlignmentMode = SKLabelVerticalAlignmentMode.Center
         myLabel.position = CGPoint(x:CGRectGetMidX(self.frame), y:CGRectGetMidY(self.frame));
         self.addChild(myLabel)
-        var action:SKAction = SKAction.waitForDuration(1)
+        let action:SKAction = SKAction.waitForDuration(1)
         self.runAction(action, completion: { () -> Void in
             myLabel.removeFromParent()
         })
@@ -274,15 +290,15 @@ extension GameScene {
     
     func colorizeChoosenSpriteNodeWithColor(color:SKColor,touchLocation:CGPoint){
         if selectedNode != nil {
-            var touchedNode:SKNode = self.nodeAtPoint(touchLocation)
+            let touchedNode:SKNode = self.nodeAtPoint(touchLocation)
             var nodeObject:AnimalSpriteNode!
-            var condition:Bool = touchedNode.isKindOfClass(WaterSpriteNode)
+            let condition:Bool = touchedNode.isKindOfClass(WaterSpriteNode)
             if condition == false{
                 nodeObject = touchedNode.parent as? AnimalSpriteNode
             }
             if nodeObject != nil && selectedNode == nodeObject {
-                var changeColorAction:SKAction = SKAction.colorizeWithColor(color, colorBlendFactor: 1.0, duration: 0.2)
-                var selectAction:SKAction = SKAction.sequence([changeColorAction])
+                let changeColorAction:SKAction = SKAction.colorizeWithColor(color, colorBlendFactor: 1.0, duration: 0.2)
+                let selectAction:SKAction = SKAction.sequence([changeColorAction])
                 selectedNode.runAction(selectAction, completion: { () -> Void in
                     self.selectedNode.color = color
                 })
@@ -293,36 +309,33 @@ extension GameScene {
     // MARK: - Game method
     
     func setSelectNodeWithPosition(position:CGPoint) {
-        var animalPicSpriteNode : AnimalPicSpriteNode = self.nodeAtPoint(position) as! AnimalPicSpriteNode
-        selectedNode = animalPicSpriteNode.parent as! AnimalSpriteNode
-        if selectedNode == nil {
-            println("网络传输不合法的当前node坐标")
-        }
+        let animalPicSpriteNode : AnimalPicSpriteNode = self.nodeAtPoint(position) as! AnimalPicSpriteNode
+        let selectedNodeFromNet:AnimalSpriteNode = animalPicSpriteNode.parent as! AnimalSpriteNode
+        changeSelectedSprite(selectedNodeFromNet, isFromNet: true)
     }
     
-    func selectNodeForTouch(touchLocation:CGPoint){
+    func selectNodeForTouch(touchLocation:CGPoint, isFromNet:Bool){
         
-        var touchedNode:SKNode = self.nodeAtPoint(touchLocation)
+        let touchedNode:SKNode = self.nodeAtPoint(touchLocation)
         
         var nodeObject:AnimalSpriteNode!
         
-        var condition1:Bool = touchedNode.isKindOfClass(WaterSpriteNode)
-        var condition2:Bool = selectedNode != nil
-        var condition3:Bool = false
+        let condition1:Bool = touchedNode.isKindOfClass(WaterSpriteNode)
+        let condition2:Bool = selectedNode != nil
         if condition1 == false{
             nodeObject = touchedNode.parent as? AnimalSpriteNode
         }
         
         if (condition2){
             if selectedNode.isEqual(nodeObject){
-                println("点击了当前已选中的精灵")
+                print("点击了当前已选中的精灵")
                 return
             }
             
             if (selectedNode.power == 0) {
-                println("老鼠相关")
+                print("老鼠相关")
                 if nodeObject != nil && selectedNode.physicsBody?.categoryBitMask == nodeObject.physicsBody?.categoryBitMask {
-                    changeSelectedSprite(nodeObject)
+                    changeSelectedSprite(nodeObject, isFromNet: isFromNet)
                 }else if waterSpriteNode.frame.contains(selectedNode.position) && waterSpriteNode.frame.contains(touchLocation) == false{
                     ratesMoveFromWaterToShore(touchLocation)
                 }else if (waterSpriteNode.frame.contains(selectedNode.position) && waterSpriteNode.frame.contains(touchLocation)){
@@ -334,47 +347,33 @@ extension GameScene {
                 }
             }else {
                 if (waterSpriteNode.containsPoint(touchLocation)) {
-                    println("其他动物不可进河")
+                    print("其他动物不可进河")
                     return
                 }
-                println("点击另一精灵")
+                print("点击另一精灵")
                 if nodeObject != nil && selectedNode.physicsBody?.categoryBitMask == nodeObject.physicsBody?.categoryBitMask {
-                    changeSelectedSprite(nodeObject)
+                    changeSelectedSprite(nodeObject, isFromNet: isFromNet)
                 }else {
                     moveAndFight(touchLocation)
                 }
             }
         }else {
-            if nodeObject != nil {
-                currentCategory = nodeObject.physicsBody?.categoryBitMask
-                if lastCategory == currentCategory {
-                    println("轮到对方啦")
-                    showTips()
-                    return
-                }
-                selectedNode = nodeObject
-                if (selectedNode == nil) {
-                    println("should selectd an animal fisrt")
-                    return
-                }
-                var sequence:SKAction = SKAction.sequence([SKAction.rotateByAngle(degToRad(-4.0), duration: 0.1),SKAction.rotateByAngle(0.0, duration: 0.1),SKAction.rotateByAngle(degToRad(4.0), duration: 0.1)])
-                selectedNode.runAction(SKAction.repeatActionForever(sequence))
-            }
+            changeSelectedSprite(nodeObject, isFromNet: isFromNet)
         }
     }
     
     func ratesMoveFromWaterToShore(touchLocation:CGPoint){
         var destinationPosizition:CGPoint = touchLocation
         if touchLocation.y > selectedNode.position.y && touchLocation.y > waterSpriteNode.size.height + waterSpriteNode.frame.origin.y{
-            println("上游岸")
+            print("上游岸")
             
-            destinationPosizition.x = (CGFloat(Int(touchLocation.x / selectedNode.size.width))) * selectedNode.size.width + selectedNode.size.width/2
-            destinationPosizition.y = waterSpriteNode.frame.origin.y + waterSpriteNode.size.height + selectedNode.size.height/2
+            destinationPosizition.x = (CGFloat(Int(touchLocation.x / selectedNode.size.width))) * selectedNode.size.width + selectedNode.size.width/2.0
+            destinationPosizition.y = waterSpriteNode.frame.origin.y + waterSpriteNode.size.height + selectedNode.size.height/2.0
         }else if touchLocation.y < selectedNode.position.y && touchLocation.y < waterSpriteNode.frame.origin.y{
-            println("下游岸")
+            print("下游岸")
             
-            destinationPosizition.x = (CGFloat(Int(touchLocation.x / selectedNode.size.width))) * selectedNode.size.width + selectedNode.size.width/2
-            destinationPosizition.y = waterSpriteNode.frame.origin.y - selectedNode.size.height/2
+            destinationPosizition.x = (CGFloat(Int(touchLocation.x / selectedNode.size.width))) * selectedNode.size.width + selectedNode.size.width/2.0
+            destinationPosizition.y = waterSpriteNode.frame.origin.y - selectedNode.size.height/2.0
             
         }
         didAnimalMove(destinationPosizition, isFromNet: false)
@@ -391,19 +390,19 @@ extension GameScene {
         var destinationPosizition:CGPoint = touchLocation
         
         if touchLocation.y + selectedNode.size.height/2 < waterSpriteNode.size.height + waterSpriteNode.frame.origin.y && touchLocation.y - selectedNode.size.height/2 > waterSpriteNode.frame.origin.y && touchLocation.x - selectedNode.size.height/2 > 0 && touchLocation.x + selectedNode.size.width/2 < waterSpriteNode.size.width{
-            println("good position")
+            print("good position")
         }else {
             if touchLocation.x - selectedNode.size.width < 0 {
-                destinationPosizition.x = selectedNode.size.width/2
+                destinationPosizition.x = selectedNode.size.width/2.0
             }
             if touchLocation.x + selectedNode.size.width > waterSpriteNode.size.width {
-                destinationPosizition.x = waterSpriteNode.size.width - selectedNode.size.width/2
+                destinationPosizition.x = waterSpriteNode.size.width - selectedNode.size.width/2.0
             }
             if touchLocation.y - selectedNode.size.height < waterSpriteNode.frame.origin.y {
-                destinationPosizition.y = waterSpriteNode.frame.origin.y + selectedNode.size.height/2
+                destinationPosizition.y = waterSpriteNode.frame.origin.y + selectedNode.size.height/2.0
             }
             if touchLocation.y + selectedNode.size.height > waterSpriteNode.frame.origin.y + waterSpriteNode.size.height{
-                destinationPosizition.y = waterSpriteNode.frame.origin.y + waterSpriteNode.size.height - selectedNode.size.height/2
+                destinationPosizition.y = waterSpriteNode.frame.origin.y + waterSpriteNode.size.height - selectedNode.size.height/2.0
             }
         }
         
@@ -412,11 +411,11 @@ extension GameScene {
     
     func ratesMoveFromShoreToWater(nodeObject:AnimalSpriteNode!,touchLocation:CGPoint){
         //老鼠进河
-        var destinationPosition:CGPoint = bestDestinationInWater(touchLocation)
+        let destinationPosition:CGPoint = bestDestinationInWater(touchLocation)
         if touchLocation.y > selectedNode.position.y {
             //下岸入河
             if waterSpriteNode.frame.contains(CGPointMake(selectedNode.position.x, selectedNode.position.y+selectedNode.size.height)){
-                println("老鼠在岸边")
+                print("老鼠在岸边")
                 didAnimalMove(destinationPosition,isFromNet: false)
             }else {
                 moveAndFight(touchLocation)
@@ -426,7 +425,7 @@ extension GameScene {
             //上岸入河
             if waterSpriteNode.frame.contains(CGPointMake(selectedNode.position.x, selectedNode.position.y-selectedNode.size.height)){
                 didAnimalMove(destinationPosition, isFromNet: false)
-                println("老鼠在岸边")
+                print("老鼠在岸边")
             }else {
                 moveAndFight(touchLocation)
             }
@@ -434,24 +433,24 @@ extension GameScene {
     }
     
     func moveAndFight(touchLocation:CGPoint){
-        var xTouchOffset:CGFloat = touchLocation.x - selectedNode.position.x
-        var yTouchOffset:CGFloat = touchLocation.y - selectedNode.position.y
+        let xTouchOffset:CGFloat = touchLocation.x - selectedNode.position.x
+        let yTouchOffset:CGFloat = touchLocation.y - selectedNode.position.y
         
         if fabs(xTouchOffset) - selectedNode.size.width/2.0 < 0 && fabs(yTouchOffset) - selectedNode.size.width/2.0 < 0 {
-            println("移动距离上下左右不够一格")
+            print("移动距离上下左右不够一格")
             return;
         }
         
         if fabs(xTouchOffset) - selectedNode.size.width/2.0 > 0 && fabs(yTouchOffset) - selectedNode.size.width/2.0 > 0 {
             if waterSpriteNode.frame.contains(selectedNode.position) == false{
-                println("不能对角线移动")
+                print("不能对角线移动")
                 return;
             }
         }
         
         if xTouchOffset > 0 && fabs(xTouchOffset) > fabs(yTouchOffset){
-            println("right")
-            var destinationPosizition:CGPoint = CGPointMake(selectedNode.position.x + selectedNode.size.width, selectedNode.position.y)
+            print("right")
+            let destinationPosizition:CGPoint = CGPointMake(selectedNode.position.x + selectedNode.size.width, selectedNode.position.y)
             
             didAnimalMove(destinationPosizition, isFromNet: false)
             
@@ -460,61 +459,66 @@ extension GameScene {
         }
         
         if xTouchOffset < 0 && fabs(xTouchOffset) > fabs(yTouchOffset){
-            println("left")
-            var destinationPosizition:CGPoint = CGPointMake(selectedNode.position.x - selectedNode.size.width, selectedNode.position.y)
-            
+            print("left")
+            let destinationPosizition:CGPoint = CGPointMake(selectedNode.position.x - selectedNode.size.width, selectedNode.position.y)
             didAnimalMove(destinationPosizition, isFromNet: false)
-            
             return
-            
         }
         if yTouchOffset > 0 && fabs(yTouchOffset) > fabs(xTouchOffset){
-            println("up")
+            print("up")
             var destinationPosizition:CGPoint = CGPointZero
-            
             
             destinationPosizition = CGPointMake(selectedNode.position.x, selectedNode.position.y + selectedNode.size.width)
             if touchLocation.y - selectedNode.position.y > waterSpriteNode.frame.size.height + selectedNode.size.height/2 {
-                var destinationPosizitionY = selectedNode.position.y + selectedNode.size.width + waterSpriteNode.frame.size.height
+                let destinationPosizitionY = selectedNode.position.y + selectedNode.size.width + waterSpriteNode.frame.size.height
                 destinationPosizition = CGPointMake(selectedNode.position.x, destinationPosizitionY)
             }
             
-            var touchedNode1:SKNode! = self.nodeAtPoint(destinationPosizition)
+            let touchedNode1:SKNode! = self.nodeAtPoint(destinationPosizition)
             if touchedNode1 is WaterSpriteNode {
                 destinationPosizition = CGPointMake(selectedNode.position.x, selectedNode.position.y + selectedNode.size.width)
             }
-            println("\(destinationPosizition)")
+            print("\(destinationPosizition)")
             didAnimalMove(destinationPosizition, isFromNet: false)
-            
             return
         }
         
         if yTouchOffset < 0 && fabs(yTouchOffset) > fabs(xTouchOffset){
-            println("down")
+            print("down")
             var destinationPosizition:CGPoint = CGPointZero
             
             destinationPosizition = CGPointMake(selectedNode.position.x, selectedNode.position.y - selectedNode.size.width)
             if fabs(touchLocation.y - selectedNode.position.y) > waterSpriteNode.frame.size.height + selectedNode.size.height/2 {
-                var destinationPosizitionY = selectedNode.position.y - selectedNode.size.width - waterSpriteNode.frame.size.height
+                let destinationPosizitionY = selectedNode.position.y - selectedNode.size.width - waterSpriteNode.frame.size.height
                 destinationPosizition = CGPointMake(selectedNode.position.x, destinationPosizitionY)
             }
-            var touchedNode1:SKNode! = self.nodeAtPoint(destinationPosizition)
+            let touchedNode1:SKNode! = self.nodeAtPoint(destinationPosizition)
             if touchedNode1 is WaterSpriteNode {
                 destinationPosizition = CGPointMake(selectedNode.position.x, selectedNode.position.y - selectedNode.size.width)
             }
-            println("\(destinationPosizition)")
+            print("\(destinationPosizition)")
             didAnimalMove(destinationPosizition, isFromNet: false)
-            
             return
         }
     }
     
-    func changeSelectedSprite(nodeObject:AnimalSpriteNode!){
-        println("同一阵营")
-        cancleSelectedSprite()
-        selectedNode = nodeObject
-        var sequence:SKAction = SKAction.sequence([SKAction.rotateByAngle(degToRad(-4.0), duration: 0.1),SKAction.rotateByAngle(0.0, duration: 0.1),SKAction.rotateByAngle(degToRad(4.0), duration: 0.1)])
-        selectedNode.runAction(SKAction.repeatActionForever(sequence))
+    func changeSelectedSprite(nodeObject:AnimalSpriteNode!, isFromNet:Bool){
+        if nodeObject != nil {
+            currentCategory = nodeObject.physicsBody?.categoryBitMask
+            if lastCategory == currentCategory {
+                print("轮到对方啦")
+                showTips()
+                return
+            }
+            print("同一阵营")
+            cancleSelectedSprite()
+            selectedNode = nodeObject
+            let sequence:SKAction = SKAction.sequence([SKAction.rotateByAngle(degToRad(-4.0), duration: 0.1),SKAction.rotateByAngle(0.0, duration: 0.1),SKAction.rotateByAngle(degToRad(4.0), duration: 0.1)])
+            selectedNode.runAction(SKAction.repeatActionForever(sequence))
+            if isFromNet == false {
+                gameSceneDelegate?.didTapOnSpriteNode(selectedNode.position, orderMessageTapType: OrderMessageTapType.OrderMessageTapType2Select)
+            }
+        }
     }
     
     func cancleSelectedSprite(){
@@ -536,21 +540,21 @@ extension GameScene {
         }
         if touchedNode1 is WaterSpriteNode {
             
-            println("touchedNode1 is WaterSpriteNode")
+            print("touchedNode1 is WaterSpriteNode")
         }
         
-        var condition0:Bool = touchedNode1 is WaterSpriteNode
-        var condition1:Bool = (touchedNode1 == nil)
-        var condition2:Bool = (touchedNode1 is SKScene)
+        let condition0:Bool = touchedNode1 is WaterSpriteNode
+        let condition1:Bool = (touchedNode1 == nil)
+        let condition2:Bool = (touchedNode1 is SKScene)
         var condition3:Bool = (condition0 == false && condition2 == false && touchedNode1 is AnimalSpriteNode && selectedNode.physicsBody?.categoryBitMask != touchedNode1.physicsBody?.categoryBitMask && ((selectedNode.power >= (touchedNode1 as! AnimalSpriteNode).power)))
         if condition0 == false && condition2 == false && selectedNode.power == 7 && (touchedNode1 as! AnimalSpriteNode).power == 0 {
             condition3 = false
         }
-        var condition4:Bool = (condition0 == false && condition2 == false && selectedNode.power == 0 && (touchedNode1 as! AnimalSpriteNode).power == 7)
+        let condition4:Bool = (condition0 == false && condition2 == false && selectedNode.power == 0 && (touchedNode1 as! AnimalSpriteNode).power == 7)
         
         if (condition0 || condition1 || condition2 || condition3 || condition4) {
-            var moveAction:SKAction = SKAction.moveTo(destinationPosizition, duration:0.3)
-            var doneAction:SKAction = SKAction.runBlock({ () -> Void in
+            let moveAction:SKAction = SKAction.moveTo(destinationPosizition, duration:0.3)
+            let doneAction:SKAction = SKAction.runBlock({ () -> Void in
                 if touchedNode1 != nil{
                     self.lastCategory = self.selectedNode.physicsBody?.categoryBitMask
                     if touchedNode1 is WaterSpriteNode {
@@ -584,7 +588,7 @@ extension GameScene {
             if isFromNet == false {
                 self.gameSceneDelegate?.didMoveItem(self.selectedNode.position, destinationPosizition: destinationPosizition)
             }
-            var sequence:SKAction = SKAction.sequence([moveAction,doneAction])
+            let sequence:SKAction = SKAction.sequence([moveAction,doneAction])
             selectedNode.runAction(sequence)
             
         }

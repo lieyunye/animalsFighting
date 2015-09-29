@@ -16,106 +16,83 @@ enum ConnectState : String {
     case ConnectStateUnkown = "ConnectStateUnkown"
 }
 
+
+enum OrderMessageTapType: Int {
+    case OrderMessageTapTypeUnkonw
+    case OrderMessageTapType2Select
+    case OrderMessageTapType2Flip
+}
+
+enum OrderMessageType: Int {
+    case OrderMessageTypeUnkonw
+    case OrderMessageTypeTap
+    case OrderMessageTypeMove
+}
+
+struct OrderMessage {
+    var orderMessageType: OrderMessageType!
+    var orderMessageTapType: OrderMessageTapType!
+    var tapPosition: CGPoint!
+    var sourcePosition: CGPoint!
+    var destinationPosition: CGPoint!
+    var destinationPositionXXXXXX: CGFloat!
+    var destinationPositionYYYYYY: CGFloat!
+
+    init() {
+        orderMessageType = OrderMessageType.OrderMessageTypeUnkonw
+        orderMessageTapType = OrderMessageTapType.OrderMessageTapTypeUnkonw
+        tapPosition = CGPointZero
+        sourcePosition = CGPointZero
+        destinationPosition = CGPointZero
+        
+        destinationPositionXXXXXX = 0.00000
+        destinationPositionYYYYYY = 0.00000
+    }
+}
+
 enum MessageType : Int {
+    case MessageTypeGameUnkonw
     case MessageTypeGameBegin
-    case MessageTypeGameOver
     case MessageTypeGamePlaying
-    case MessageTypeGameFlip
+    case MessageTypeGameOver
 }
 
 class Message : NSObject,NSCoding{
     
     var messageType : MessageType!
-    var messageString : String!
     var animalPositions : [CGPoint]!
-    var sourcePosition : CGPoint!
-    var destinationPosition : CGPoint!
-    var flipPosition : CGPoint!
+    var descArray: [OrderMessage]!
     
     override init(){
-        messageType = .MessageTypeGameBegin
-        messageString = ""
+        messageType = .MessageTypeGameUnkonw
         animalPositions = [CGPoint]()
-        sourcePosition = CGPointZero
-        destinationPosition = CGPointZero
-        flipPosition = CGPointZero
+        descArray = [OrderMessage]()
     }
     
     @objc func encodeWithCoder(aCoder: NSCoder){
-        aCoder.encodeObject(messageString, forKey: "messageString")
         aCoder.encodeObject(messageType.rawValue, forKey: "messageType")
         let data = NSData(bytes: animalPositions, length: animalPositions.count * sizeof(CGPoint))
         aCoder.encodeObject(data, forKey: "animalPositions")
-        aCoder.encodeCGPoint(sourcePosition, forKey: "sourcePosition")
-        aCoder.encodeCGPoint(destinationPosition, forKey: "destinationPosition")
-        aCoder.encodeCGPoint(flipPosition, forKey: "flipPosition")
+        
+        let descData = NSData(bytes: descArray, length: descArray.count * sizeof(OrderMessage))
+        aCoder.encodeObject(descData, forKey: "descArray")
 
     }
     
-    @objc required init(coder aDecoder: NSCoder) {
-        messageString = (aDecoder.decodeObjectForKey("messageString") as? String)!
+    @objc required init?(coder aDecoder: NSCoder) {
         messageType = MessageType(rawValue: (aDecoder.decodeObjectForKey("messageType") as? Int)!)!
+        
         let data : NSData = aDecoder.decodeObjectForKey("animalPositions") as! NSData
         let pointer = UnsafePointer<CGPoint>(data.bytes)
         let count = data.length / sizeof(CGPoint)
         let buffer = UnsafeBufferPointer<CGPoint>(start: pointer, count: count)
         animalPositions = [CGPoint](buffer)
-        sourcePosition = aDecoder.decodeCGPointForKey("sourcePosition")
-        destinationPosition = aDecoder.decodeCGPointForKey("destinationPosition")
-        flipPosition = aDecoder.decodeCGPointForKey("flipPosition")
+        
+        let descData: NSData = aDecoder.decodeObjectForKey("descArray") as! NSData
+        let descPointer = UnsafePointer<OrderMessage>(descData.bytes)
+        let descCount = descData.length / sizeof(OrderMessage)
+        let descBuffer = UnsafeBufferPointer<OrderMessage>(start: descPointer, count: descCount)
+        descArray = [OrderMessage](descBuffer)
     }
     
-}
-
-class MessageTypeGameBegin:NSObject {
-    var animalPositions :[CGPoint]!
-    
-    override init() {
-        super.init()
-    }
-    
-    @objc func encodeWithCoder(aCoder: NSCoder){
-        let data = NSData(bytes: animalPositions, length: animalPositions.count * sizeof(CGPoint))
-        aCoder.encodeObject(data, forKey: "animalPositions")
-    }
-    
-    @objc required init(coder aDecoder: NSCoder) {
-        let data : NSData = aDecoder.decodeObjectForKey("animalPositions") as! NSData
-        let pointer = UnsafePointer<CGPoint>(data.bytes)
-        let count = data.length / sizeof(CGPoint)
-        let buffer = UnsafeBufferPointer<CGPoint>(start: pointer, count: count)
-        animalPositions = [CGPoint](buffer)
-    }
-}
-
-class MessageTypeGameOver: Message {
-    override init() {
-        super.init()
-    }
-
-    @objc override func encodeWithCoder(aCoder: NSCoder){
-    }
-    
-    @objc required init(coder aDecoder: NSCoder) {
-        super.init(coder: aDecoder)
-    }
-}
-
-class MessageTypeGamePlaying: NSObject {
-    var sourcePosition:CGPoint!
-    var destinationPosition : CGPoint!
-    
-    override init() {
-        super.init()
-    }
-    
-    @objc func encodeWithCoder(aCoder: NSCoder){
-        aCoder.encodeCGPoint(sourcePosition, forKey: "sourcePosition")
-        aCoder.encodeCGPoint(destinationPosition, forKey: "destinationPosition")
-    }
-    
-    @objc required init(coder aDecoder: NSCoder) {
-        sourcePosition = aDecoder.decodeCGPointForKey("sourcePosition")
-        destinationPosition = aDecoder.decodeCGPointForKey("destinationPosition")
-    }
 }

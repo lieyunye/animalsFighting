@@ -12,7 +12,7 @@ class EndGameScene: SKScene {
     
     override func didMoveToView(view: SKView) {
         
-        var lblTryAgain:SKLabelNode = SKLabelNode(fontNamed: "ChalkboardSE-Bold")
+        let lblTryAgain:SKLabelNode = SKLabelNode(fontNamed: "ChalkboardSE-Bold")
         lblTryAgain.fontSize = 30
         lblTryAgain.fontColor = SKColor.whiteColor()
         lblTryAgain.position = CGPointMake(CGRectGetMidX(self.frame), CGRectGetMidY(self.frame))
@@ -21,14 +21,15 @@ class EndGameScene: SKScene {
         self.addChild(lblTryAgain)
     }
     
-    override func touchesBegan(touches: Set<NSObject>, withEvent event: UIEvent) {
+    override func touchesBegan(touches: Set<UITouch>, withEvent event: UIEvent?) {
         startGame()
     }
     
     func startGame(){
-        var gameScene:GameScene = GameScene.unarchiveFromFile("GameScene") as! GameScene
-        var reveal:SKTransition = SKTransition.doorsOpenHorizontalWithDuration(1)
-        self.view?.presentScene(gameScene, transition: reveal)
+        if let gameScene:GameScene = GameScene(fileNamed:"GameScene"){
+            let reveal:SKTransition = SKTransition.doorsOpenHorizontalWithDuration(1)
+            self.view?.presentScene(gameScene, transition: reveal)
+        }
     }
     
 }
